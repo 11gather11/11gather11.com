@@ -64,7 +64,7 @@
 		"eslint-plugin-simple-import-sort": "12.1.1",
 		"globals": "16.5.0",
 		"knip": "5.71.0",
-		"lefthook": "2.0.7",
+		"lefthook": "2.1.12",
 		"prettier": "3.7.4",
 		"prettier-plugin-astro": "0.14.1",
 		"sonda": "0.10.1",
