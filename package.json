@@ -24,7 +24,7 @@
 		"@fontsource-variable/noto-sans-jp": "5.2.9",
 		"@fontsource-variable/raleway": "5.2.8",
 		"@iconify-json/line-md": "1.2.11",
-		"@iconify-json/tabler": "1.2.23",
+		"@iconify-json/tabler": "1.2.38",
 		"@playform/compress": "0.2.0",
 		"@swup/astro": "1.7.0",
 		"@tailwindcss/typography": "0.5.19",
