@@ -40,7 +40,7 @@ export function Document({ title, description, pathname, lang = SITE.defaultLang
 					<link key={href} rel='stylesheet' href={href} />
 				))}
 			</head>
-			<body>{children}</body>
+			<body className='mx-auto max-w-2xl px-4 py-8 font-sans leading-7'>{children}</body>
 		</html>
 	)
 }

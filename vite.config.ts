@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import { configDefaults, defineConfig } from 'vite-plus'
 
 import { ssg } from './src/ssg/plugin.ts'
@@ -11,7 +12,7 @@ export default defineConfig({
 			ignored: ['**/.direnv/**'],
 		},
 	},
-	plugins: [ssg()],
+	plugins: [tailwindcss(), ssg()],
 	// In-source tests are guarded by `import.meta.vitest`; defining it away lets the build drop them.
 	define: {
 		'import.meta.vitest': 'undefined',
@@ -30,6 +31,8 @@ export default defineConfig({
 		ignorePatterns: IGNORED_PATHS,
 		// Setting plugins replaces the defaults, so the default three are listed again.
 		plugins: ['typescript', 'unicorn', 'oxc', 'react', 'jsx-a11y', 'import', 'vitest'],
+		// Design-system rules for Tailwind classes. Registered only; no shadcn/* rule is enabled yet.
+		jsPlugins: ['@shadcn/lint'],
 		options: {
 			typeAware: true,
 			typeCheck: true,
