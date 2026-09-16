@@ -40,9 +40,7 @@ export function Document({ title, description, pathname, lang = SITE.defaultLang
 					<link key={href} rel='stylesheet' href={href} />
 				))}
 			</head>
-			<body className='mx-auto max-w-2xl bg-background px-4 font-sans leading-7 text-foreground antialiased'>
-				{children}
-			</body>
+			<body className='bg-background font-sans leading-7 text-foreground antialiased'>{children}</body>
 		</html>
 	)
 }

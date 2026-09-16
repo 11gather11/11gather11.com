@@ -9,10 +9,10 @@ export const routes: PageRoutes = () => [
 		render: ({ assets }) =>
 			renderHtml(
 				<SiteLayout title='404' description='Page not found' assets={assets}>
-					<section className='py-16'>
-						<h1 className='text-3xl font-bold tracking-tight'>404</h1>
-						<p className='mt-2 text-muted-foreground'>This page could not be found.</p>
-						<p className='mt-6'>
+					<section>
+						<h1 className='text-4xl font-bold tracking-tight sm:text-6xl'>404</h1>
+						<p className='mt-4 text-lg text-muted-foreground'>This page could not be found.</p>
+						<p className='mt-8 text-lg'>
 							<a href='/' className='underline underline-offset-4'>
 								Back to home
 							</a>

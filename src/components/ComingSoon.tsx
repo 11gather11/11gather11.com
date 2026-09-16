@@ -12,9 +12,9 @@ export type ComingSoonProps = {
  */
 export function ComingSoon({ title }: ComingSoonProps) {
 	return (
-		<section className='py-16'>
-			<h1 className='text-3xl font-bold tracking-tight'>{title}</h1>
-			<p className='mt-2 text-muted-foreground'>Coming soon.</p>
+		<section>
+			<h1 className='text-4xl font-bold tracking-tight sm:text-6xl'>{title}</h1>
+			<p className='mt-4 text-lg text-muted-foreground'>Coming soon.</p>
 		</section>
 	)
 }
