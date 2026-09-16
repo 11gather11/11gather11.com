@@ -25,24 +25,40 @@
 }
 
 /*
- * Colour tokens. Every foreground/background pair meets WCAG AA (4.5:1) in both schemes:
- * foreground on background is about 16.4:1, muted-foreground on background about 6.7:1 (light)
- * and 7.6:1 (dark).
+ * Colour tokens, built from two brand colours: ivory #f8f3e8 and navy #15264a.
+ *
+ * The page uses one colour for its background and the other for text; the header and footer
+ * bands ("band") invert that pair, echoing the home page's ivory/navy split. The dark scheme
+ * swaps the two colours rather than introducing new ones, so both schemes keep the same identity.
+ *
+ * WCAG contrast ratios (AA needs 4.5:1 for body text), identical in both schemes because the
+ * pairs only trade places:
+ * - foreground on background, band-foreground on band (navy/ivory): 13.48:1
+ * - muted-foreground #4e5972 on ivory (light page, dark-scheme band): 6.33:1
+ * - muted-foreground #bfc0c0 on navy (dark page, light-scheme band): 8.18:1
+ * The muted tones are navy mixed 25% towards ivory and ivory mixed 25% towards navy. Borders are
+ * decorative separators and carry no text.
  */
 :root {
 	color-scheme: light dark;
-	--background: #ffffff;
-	--foreground: #1f1f1f;
-	--muted-foreground: #5c5c5c;
-	--border: #e5e5e5;
+	--background: #f8f3e8;
+	--foreground: #15264a;
+	--muted-foreground: #4e5972;
+	--border: #d6d4d0;
+	--band: #15264a;
+	--band-foreground: #f8f3e8;
+	--band-muted-foreground: #bfc0c0;
 }
 
 @media (prefers-color-scheme: dark) {
 	:root {
-		--background: #0f0f0f;
-		--foreground: #ededed;
-		--muted-foreground: #a3a3a3;
-		--border: #2a2a2a;
+		--background: #15264a;
+		--foreground: #f8f3e8;
+		--muted-foreground: #bfc0c0;
+		--border: #374562;
+		--band: #f8f3e8;
+		--band-foreground: #15264a;
+		--band-muted-foreground: #4e5972;
 	}
 }
 
@@ -51,5 +67,8 @@
 	--color-foreground: var(--foreground);
 	--color-muted-foreground: var(--muted-foreground);
 	--color-border: var(--border);
+	--color-band: var(--band);
+	--color-band-foreground: var(--band-foreground);
+	--color-band-muted-foreground: var(--band-muted-foreground);
 	--font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
 }
