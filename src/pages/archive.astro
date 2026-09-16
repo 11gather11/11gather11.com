@@ -1,8 +1,0 @@
----
-import ArticleArchiveLayout from '@/layouts/ArticleArchiveLayout.astro'
-import { getArchives } from '@/utils/articles'
-
-const archiveMap = await getArchives()
----
-
-<ArticleArchiveLayout archiveMap={archiveMap} title='アーカイブ' />
