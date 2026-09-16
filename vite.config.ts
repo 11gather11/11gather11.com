@@ -1,4 +1,6 @@
-import { defineConfig } from 'vite-plus'
+import { configDefaults, defineConfig } from 'vite-plus'
+
+import { ssg } from './src/ssg/plugin.ts'
 
 const IGNORED_PATHS = ['dist/**', 'node_modules/**', '.direnv/**', '.wrangler/**']
 
@@ -9,9 +11,10 @@ export default defineConfig({
 			ignored: ['**/.direnv/**'],
 		},
 	},
-	build: {
-		outDir: 'dist',
-		emptyOutDir: true,
+	plugins: [ssg()],
+	// In-source tests are guarded by `import.meta.vitest`; defining it away lets the build drop them.
+	define: {
+		'import.meta.vitest': 'undefined',
 	},
 	fmt: {
 		ignorePatterns: [...IGNORED_PATHS, 'pnpm-lock.yaml'],
@@ -25,6 +28,8 @@ export default defineConfig({
 	},
 	lint: {
 		ignorePatterns: IGNORED_PATHS,
+		// Setting plugins replaces the defaults, so the default three are listed again.
+		plugins: ['typescript', 'unicorn', 'oxc', 'react', 'jsx-a11y', 'import', 'vitest'],
 		options: {
 			typeAware: true,
 			typeCheck: true,
@@ -38,5 +43,7 @@ export default defineConfig({
 	test: {
 		environment: 'node',
 		includeSource: ['src/**/*.{ts,tsx}'],
+		// .direnv/flake-inputs links nixpkgs, whose own test files would otherwise be collected.
+		exclude: [...configDefaults.exclude, '.direnv/**'],
 	},
 })

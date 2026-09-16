@@ -1,0 +1,97 @@
+import { outputFileName } from './output.ts'
+
+type MaybePromise<T> = T | Promise<T>
+
+/** Built files a page links to, resolved by the dev server or the client build. */
+export type SiteAssets = {
+	/** Stylesheet URLs to link from every HTML page, in order. */
+	stylesheets: readonly string[]
+}
+
+/** What a route receives when it renders. */
+export type RenderContext = {
+	assets: SiteAssets
+}
+
+/** One public URL and how to produce its body. */
+export type PageRoute = {
+	/** Public URL path; see {@link outputFileName} for the accepted shapes. */
+	path: string
+	render: (context: RenderContext) => MaybePromise<string>
+}
+
+/**
+ * Lists the URLs a page module serves.
+ *
+ * A function rather than an array so modules that derive URLs from content (such as one URL per
+ * article) can load that content first.
+ */
+export type PageRoutes = () => MaybePromise<readonly PageRoute[]>
+
+/** The shape `src/pages/**\/index.tsx` modules export. */
+export type PageModule = {
+	routes: PageRoutes
+}
+
+/** Every route of the site, looked up by URL path. */
+export type RouteTable = ReadonlyMap<string, PageRoute>
+
+/**
+ * Collects the routes of all page modules into one table.
+ *
+ * @param modules - Page modules keyed by their source path, as `import.meta.glob` returns them.
+ * @returns Routes keyed by URL path.
+ * @throws If a path is malformed or two routes claim the same path, since one would silently
+ *   overwrite the other's output file.
+ * @example
+ * const table = await createRouteTable(import.meta.glob('/src/pages/**\/index.tsx', { eager: true }))
+ */
+export async function createRouteTable(modules: Record<string, PageModule>): Promise<RouteTable> {
+	const table = new Map<string, PageRoute>()
+	// Remember which module added each path so a clash names both sides.
+	const owners = new Map<string, string>()
+	for (const [source, module] of Object.entries(modules)) {
+		for (const route of await module.routes()) {
+			// Validate the path shape here, not only at write time, so dev fails as early as build.
+			outputFileName(route.path)
+			const owner = owners.get(route.path)
+			if (owner !== undefined) {
+				throw new Error(`Route ${route.path} is defined by both ${owner} and ${source}`)
+			}
+			owners.set(route.path, source)
+			table.set(route.path, route)
+		}
+	}
+	return table
+}
+
+if (import.meta.vitest) {
+	const { describe, expect, test } = import.meta.vitest
+
+	const route = (path: string): PageRoute => ({ path, render: () => path })
+
+	describe('createRouteTable', () => {
+		test('merges routes from every module', async () => {
+			const table = await createRouteTable({
+				'/src/pages/index.tsx': { routes: () => [route('/')] },
+				'/src/pages/blog/index.tsx': { routes: async () => [route('/blog/'), route('/blog/rss.xml')] },
+			})
+			expect([...table.keys()]).toEqual(['/', '/blog/', '/blog/rss.xml'])
+		})
+
+		test('rejects two modules claiming one path', async () => {
+			await expect(
+				createRouteTable({
+					'/src/pages/a/index.tsx': { routes: () => [route('/same/')] },
+					'/src/pages/b/index.tsx': { routes: () => [route('/same/')] },
+				})
+			).rejects.toThrow('/same/ is defined by both /src/pages/a/index.tsx and /src/pages/b/index.tsx')
+		})
+
+		test('rejects a malformed path', async () => {
+			await expect(createRouteTable({ '/src/pages/index.tsx': { routes: () => [route('/about')] } })).rejects.toThrow(
+				'must end with "/" or a file extension'
+			)
+		})
+	})
+}
