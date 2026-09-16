@@ -80,7 +80,7 @@ export function ssg(): Plugin {
 							return
 						}
 						if (result.redirect !== undefined) {
-							response.writeHead(308, { Location: result.redirect }).end()
+							response.writeHead(307, { Location: result.redirect }).end()
 							return
 						}
 						response.writeHead(200, { 'Content-Type': contentType(result.pathname) }).end(result.body)
