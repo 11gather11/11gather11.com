@@ -18,8 +18,8 @@
 		"knip": "knip"
 	},
 	"dependencies": {
-		"@astrojs/rss": "4.0.14",
-		"@astrojs/sitemap": "3.6.0",
+		"@astrojs/rss": "4.0.19",
+		"@astrojs/sitemap": "3.7.4",
 		"@fontsource-variable/jetbrains-mono": "5.2.8",
 		"@fontsource-variable/noto-sans-jp": "5.2.9",
 		"@fontsource-variable/raleway": "5.2.8",
@@ -29,7 +29,7 @@
 		"@swup/astro": "1.7.0",
 		"@tailwindcss/typography": "0.5.19",
 		"@tailwindcss/vite": "4.1.17",
-		"astro": "5.16.4",
+		"astro": "5.18.2",
 		"astro-expressive-code": "^0.41.3",
 		"astro-icon": "1.1.5",
 		"astro-pagefind": "1.8.5",
@@ -49,8 +49,8 @@
 		"vfile": "6.0.3"
 	},
 	"devDependencies": {
-		"@astrojs/check": "0.9.6",
-		"@astrojs/ts-plugin": "1.10.6",
+		"@astrojs/check": "0.9.10",
+		"@astrojs/ts-plugin": "1.10.11",
 		"@eslint/js": "9.39.1",
 		"@types/node": "24.10.1",
 		"@typescript-eslint/parser": "8.48.1",
