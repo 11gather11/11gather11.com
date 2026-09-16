@@ -1,0 +1,17 @@
+name: Setup
+description: Install Nix and the project's pnpm dependencies
+
+inputs:
+  shell:
+    description: Name of the flake devShell whose tools the job uses
+    default: ci
+
+runs:
+  using: composite
+  steps:
+    - name: Install Nix
+      uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+
+    - name: Install dependencies
+      shell: bash
+      run: nix develop .#${{ inputs.shell }} --command pnpm install --frozen-lockfile

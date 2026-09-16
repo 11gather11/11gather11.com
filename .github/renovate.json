@@ -5,5 +5,15 @@
 	"lockFileMaintenance": {
 		"enabled": false
 	},
-	"rangeStrategy": "bump"
+	"nix": {
+		"enabled": true
+	},
+	"rangeStrategy": "bump",
+	"packageRules": [
+		{
+			"description": "vite-plus, its core alias and the Vitest pin must move together; see pnpm-workspace.yaml",
+			"matchPackageNames": ["vite-plus", "@voidzero-dev/vite-plus-core", "vitest"],
+			"groupName": "vite-plus"
+		}
+	]
 }
