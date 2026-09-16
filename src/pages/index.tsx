@@ -3,7 +3,7 @@ import { SITE } from '../config/site.ts'
 import { renderHtml } from '../ssg/html.ts'
 import type { PageRoutes } from '../ssg/route.ts'
 
-const DESCRIPTION = '11gather11 のウェブサイト'
+const DESCRIPTION = 'Personal website of 11gather11'
 
 /** Home page. */
 export const routes: PageRoutes = () => [
