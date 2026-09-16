@@ -31,6 +31,10 @@ export function Document({ title, description, pathname, lang = SITE.defaultLang
 				<meta name='viewport' content='width=device-width, initial-scale=1' />
 				<title>{title === undefined ? SITE.name : `${title} | ${SITE.name}`}</title>
 				<meta name='description' content={description} />
+				{/* ICO for browsers without SVG favicons; the SVG switches colour with the OS theme. */}
+				<link rel='icon' href='/favicon.ico' sizes='32x32' />
+				<link rel='icon' href='/icon.svg' type='image/svg+xml' />
+				<link rel='apple-touch-icon' href='/apple-touch-icon.png' />
 				{pathname !== undefined && <link rel='canonical' href={new URL(pathname, SITE.origin).href} />}
 				{assets.stylesheets.map((href) => (
 					<link key={href} rel='stylesheet' href={href} />
