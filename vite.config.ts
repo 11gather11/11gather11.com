@@ -31,8 +31,16 @@ export default defineConfig({
 		ignorePatterns: IGNORED_PATHS,
 		// Setting plugins replaces the defaults, so the default three are listed again.
 		plugins: ['typescript', 'unicorn', 'oxc', 'react', 'jsx-a11y', 'import', 'vitest'],
-		// Design-system rules for Tailwind classes. Registered only; no shadcn/* rule is enabled yet.
+		// Design-system rules for Tailwind classes; see the rules block below.
 		jsPlugins: ['@shadcn/lint'],
+		rules: {
+			// Colours come from the tokens in src/styles/global.css so both schemes stay in contrast.
+			'shadcn/no-raw-colors': 'error',
+			'shadcn/no-arbitrary-values': 'error',
+			'shadcn/no-unknown-classes': 'error',
+			'shadcn/no-inline-styles': 'error',
+			'shadcn/require-static-classes': 'error',
+		},
 		options: {
 			typeAware: true,
 			typeCheck: true,
