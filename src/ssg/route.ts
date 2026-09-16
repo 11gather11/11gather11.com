@@ -8,9 +8,15 @@ export type SiteAssets = {
 	stylesheets: readonly string[]
 }
 
-/** What a route receives when it renders. */
-export type RenderContext = {
+/** What the dev server or the build supplies for rendering, before routes are collected. */
+export type SiteContext = {
 	assets: SiteAssets
+}
+
+/** What a route receives when it renders. */
+export type RenderContext = SiteContext & {
+	/** Every route path of the site, sorted, so pages such as the sitemap can list the others. */
+	paths: readonly string[]
 }
 
 /** One public URL and how to produce its body. */

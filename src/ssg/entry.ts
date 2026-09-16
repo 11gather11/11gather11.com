@@ -1,5 +1,5 @@
 import { outputFileName } from './output.ts'
-import { createRouteTable, type PageModule, type RenderContext } from './route.ts'
+import { createRouteTable, type PageModule, type RouteTable, type SiteContext } from './route.ts'
 
 // Eager so the SSR bundle contains every page and nothing lists them by hand.
 const modules = import.meta.glob<PageModule>('/src/pages/**/index.tsx', { eager: true })
@@ -18,9 +18,9 @@ export type RenderedFile = {
  * @param context - Assets as the dev server serves them.
  * @returns The response body, or `undefined` when no route has this path.
  */
-export async function renderPath(pathname: string, context: RenderContext): Promise<string | undefined> {
-	const route = (await createRouteTable(modules)).get(pathname)
-	return route?.render(context)
+export async function renderPath(pathname: string, context: SiteContext): Promise<string | undefined> {
+	const table = await createRouteTable(modules)
+	return table.get(pathname)?.render({ ...context, paths: sortedPaths(table) })
 }
 
 /**
@@ -38,12 +38,24 @@ export async function listPaths(): Promise<string[]> {
  * @param context - Assets as the client build emitted them.
  * @returns One file per route.
  */
-export async function renderSite(context: RenderContext): Promise<RenderedFile[]> {
+export async function renderSite(context: SiteContext): Promise<RenderedFile[]> {
 	const table = await createRouteTable(modules)
+	const paths = sortedPaths(table)
 	return Promise.all(
 		[...table.values()].map(async (route) => ({
 			fileName: outputFileName(route.path),
-			body: await route.render(context),
+			body: await route.render({ ...context, paths }),
 		}))
 	)
+}
+
+/**
+ * Lists a table's paths in a stable order, so generated lists such as the sitemap do not depend on
+ * the order `import.meta.glob` happens to return modules in.
+ *
+ * @param table - Route table.
+ * @returns Paths sorted by code unit.
+ */
+function sortedPaths(table: RouteTable): string[] {
+	return [...table.keys()].toSorted()
 }
