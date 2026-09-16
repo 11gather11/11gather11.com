@@ -1,0 +1,23 @@
+{
+	"name": "11gather11.com",
+	"version": "0.0.0",
+	"private": true,
+	"license": "MIT",
+	"type": "module",
+	"scripts": {
+		"preinstall": "npx only-allow pnpm",
+		"prepare": "vp config --no-agent",
+		"dev": "vp dev",
+		"build": "vp build",
+		"preview": "vp preview",
+		"check": "vp check",
+		"fix": "vp check --fix",
+		"test": "vp test --run --passWithNoTests",
+		"typos": "typos --force-exclude"
+	},
+	"devDependencies": {
+		"@types/node": "^24.13.4",
+		"vite-plus": "0.3.2"
+	},
+	"packageManager": "pnpm@12.3.4"
+}

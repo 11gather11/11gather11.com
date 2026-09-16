@@ -1,0 +1,26 @@
+packages: []
+
+# Vite+ requires every `vite` import to resolve to its core package and every `vitest`
+# import to the version it bundles; otherwise plugins and `vp test` load separate copies.
+# Keep both in step with the `vite-plus` version in package.json.
+overrides:
+  vite: npm:@voidzero-dev/vite-plus-core@0.3.2
+  vitest: 4.1.11
+
+# The aliased core package carries the Vite+ version (0.x) rather than Vite's (8.x),
+# so peers that range over Vite majors would otherwise report it as unmet.
+peerDependencyRules:
+  allowAny:
+    - vite
+
+# Supply-chain hardening. See https://pnpm.io/settings
+# Wait a day before installing a newly published version, so compromised releases
+# are usually pulled before they reach this project.
+minimumReleaseAge: 1440
+# Dependency lifecycle scripts run only for packages listed in allowBuilds.
+strictDepBuilds: true
+allowBuilds: {}
+# Reject dependencies from git repositories or tarball URLs.
+blockExoticSubdeps: true
+# Reject a version whose publisher trust is weaker than an earlier version's.
+trustPolicy: no-downgrade

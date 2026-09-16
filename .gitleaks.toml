@@ -1,0 +1,8 @@
+# https://github.com/gitleaks/gitleaks#configuration
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Lockfiles carry integrity hashes that look like secrets"
+paths = ['''pnpm-lock\.yaml$''', '''flake\.lock$''']
