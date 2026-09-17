@@ -22,6 +22,8 @@ export type RenderContext = {
 	 * @returns HTML.
 	 */
 	renderMarkdown: (source: string, documentPath: string) => Promise<string>
+	/** Absolute project root, for routes that read or render files at build time. */
+	root: string
 }
 
 /** What a page module receives when it lists its routes. */
@@ -34,7 +36,8 @@ export type RoutesContext = {
 export type PageRoute = {
 	/** Public URL path; see {@link outputFileName} for the accepted shapes. */
 	path: string
-	render: (context: RenderContext) => MaybePromise<string>
+	/** Text for HTML and XML routes; bytes for binary files such as generated images. */
+	render: (context: RenderContext) => MaybePromise<string | Uint8Array>
 }
 
 /**

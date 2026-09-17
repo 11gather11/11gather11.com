@@ -29,3 +29,6 @@ vite.config.ts.timestamp-*
 
 # jetbrains setting folder
 .idea/
+
+# Ox Content caches (Open Graph images and their template bundle)
+/.cache

@@ -40,6 +40,9 @@ function contentType(path: string): string {
 	if (path.endsWith('.xml')) {
 		return 'application/xml; charset=utf-8'
 	}
+	if (path.endsWith('.png')) {
+		return 'image/png'
+	}
 	return 'text/plain; charset=utf-8'
 }
 
@@ -109,6 +112,7 @@ async function renderPage(page: PageRoute, renderContext: OxContentCustomHostRen
 			// Syntax colours, written by Ox Content from the theme tokens in vite.config.ts.
 			syntaxStylesheet: renderContext.assets.themeTokens?.href,
 		},
+		root: renderContext.root,
 		async renderMarkdown(source, documentPath) {
 			const result = await renderContext.markdown.render({ source, documentPath })
 			dependencies.push(...result.dependencies)
@@ -118,6 +122,9 @@ async function renderPage(page: PageRoute, renderContext: OxContentCustomHostRen
 			return manifest === undefined ? html : rewriteCollectionAssetUrls({ html, pagePath: page.path, manifest }).html
 		},
 	})
+	if (body instanceof Uint8Array) {
+		return { body, contentType: contentType(page.path), dependencies }
+	}
 	const isHtml = page.path.endsWith('/') || page.path.endsWith('.html')
 	return isHtml
 		? { html: body, ...readHeadMetadata(body), dependencies }

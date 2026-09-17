@@ -17,6 +17,8 @@ export type DocumentProps = {
 	publishedTime?: string
 	/** Link the syntax colour stylesheet, for pages that render highlighted code. */
 	highlightsCode?: boolean
+	/** Site-relative Open Graph image path; pages without their own share the site-wide image. */
+	ogImage?: string
 	assets: SiteAssets
 	children: ReactNode
 }
@@ -41,6 +43,7 @@ export function Document({
 	ogType = 'website',
 	publishedTime,
 	highlightsCode = false,
+	ogImage = '/og.png',
 	assets,
 	children,
 }: DocumentProps) {
@@ -67,7 +70,7 @@ export function Document({
 				<meta property='og:description' content={description} />
 				<meta property='og:type' content={ogType} />
 				{url !== undefined && <meta property='og:url' content={url} />}
-				<meta property='og:image' content={new URL('/og.png', SITE.origin).href} />
+				<meta property='og:image' content={new URL(ogImage, SITE.origin).href} />
 				<meta property='og:image:width' content='1200' />
 				<meta property='og:image:height' content='630' />
 				<meta property='og:image:alt' content={`${SITE.name} logo on an ivory and navy background`} />
