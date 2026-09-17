@@ -12,6 +12,8 @@ export type SiteAssets = {
 	syntaxStylesheet?: string
 	/** Embed card stylesheet URLs, linked only by pages that render an embed. */
 	embedStylesheets: readonly string[]
+	/** Reader chrome browser script URLs, loaded only by blog posts. */
+	readerScripts: readonly string[]
 }
 
 /** What a route receives when it renders. */

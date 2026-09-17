@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { configDefaults, defineConfig } from 'vite-plus'
 
 import { validatePost } from './src/blog/post.ts'
+import { READER_CHROME } from './src/config/reader-chrome.ts'
 import { loadPosts } from './src/blog/posts.ts'
 import { syntaxTheme } from './src/config/syntax-theme.ts'
 
@@ -23,9 +24,11 @@ export default defineConfig({
 	build: {
 		outDir: 'dist',
 		emptyOutDir: true,
-		// The host looks up the stylesheets' hashed URLs in the manifest.
+		// The host looks up the stylesheets' and scripts' hashed URLs in the manifest.
 		manifest: true,
-		rollupOptions: { input: ['src/styles/global.css', 'src/styles/embeds.css'] },
+		rollupOptions: {
+			input: ['src/styles/global.css', 'src/styles/embeds.css', 'src/client/reader-chrome.ts'],
+		},
 	},
 	plugins: [
 		tailwindcss(),
@@ -105,6 +108,8 @@ export default defineConfig({
 					},
 				},
 				ssg: {
+					// Adds the Copy button markup to code blocks when posts are rendered.
+					readerChrome: READER_CHROME,
 					siteName: '11gather11',
 					siteUrl: 'https://11gather11.com',
 				},

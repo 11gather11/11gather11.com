@@ -1,4 +1,5 @@
 import { hasEmbeds } from '../../../blog/embeds.ts'
+import { READER_CHROME } from '../../../config/reader-chrome.ts'
 import { renderOgImage } from '../../../og/render.ts'
 import { postDateTime } from '../../../seo/date-time.ts'
 import { blogPostingStructuredData } from '../../../seo/structured-data.ts'
@@ -43,6 +44,7 @@ export const routes: PageRoutes = ({ posts }) =>
 						})}
 						highlightsCode
 						rendersEmbeds={hasEmbeds(html)}
+						readerChrome
 						assets={assets}
 					>
 						<article lang={post.lang}>
@@ -55,6 +57,18 @@ export const routes: PageRoutes = ({ posts }) =>
 							{/* oxlint-disable-next-line react/no-danger */}
 							<div className='article-body mt-12' dangerouslySetInnerHTML={{ __html: html }} />
 						</article>
+						{/*
+						 * The Back to top control of Ox Content's reader chrome (src/config/reader-chrome.ts). Its
+						 * built-in theme renders this exact markup; src/client/reader-chrome.ts shows it once the
+						 * page is scrolled, and global.css styles it.
+						 */}
+						{READER_CHROME.backToTop && (
+							// The class is Ox Content's, styled by its reader-chrome.css rather than by Tailwind.
+							// oxlint-disable-next-line shadcn/no-unknown-classes
+							<button type='button' className='ox-back-to-top' data-ox-back-to-top='' hidden aria-label='Back to top'>
+								Back to top
+							</button>
+						)}
 					</SiteLayout>
 				)
 			},

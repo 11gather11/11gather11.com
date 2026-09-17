@@ -1,4 +1,14 @@
 @import 'tailwindcss';
+/* Cross-fades between pages with the browser's View Transitions; no JavaScript, and off under reduced motion. */
+@import '@ox-content/vite-plugin/styles/mpa-navigation.css';
+/*
+ * Ox Content's reader chrome: the Copy and Back to top buttons on blog posts (src/config/reader-chrome.ts).
+ * Only posts use it, but a separate stylesheet was one more render-blocking request there and cost a
+ * point of mobile Lighthouse performance (FCP 1.51 s against 1.36 s bundled here), while bundling adds
+ * about 1.2 KB gzipped to every page. Its own layer comes after Tailwind's, so the space it reserves
+ * for the Copy button inside code blocks wins over the .article-body padding.
+ */
+@import '@ox-content/vite-plugin/styles/reader-chrome.css' layer(reader);
 /*
  * Clean selectors (`iconify simple-icons--github`) instead of `icon-[simple-icons--github]`: the
  * bracket form reads as an arbitrary value to shadcn/no-arbitrary-values. Add an icon set's prefix
@@ -102,6 +112,28 @@
 		--band-muted-foreground: #4e5972;
 		--code-surface: #273657;
 	}
+}
+
+/*
+ * Ox Content's official stylesheets (page transitions and reader chrome here, embed cards in
+ * embeds.css) read --octc-* tokens, normally defined by its core.css, which this site does not load.
+ * They are mapped onto the site's tokens so everything Ox Content draws follows both colour schemes.
+ */
+:root {
+	--octc-color-bg: var(--background);
+	--octc-color-bg-alt: var(--code-surface);
+	--octc-color-text: var(--foreground);
+	--octc-color-text-muted: var(--muted-foreground);
+	--octc-color-primary: var(--foreground);
+	--octc-color-border: var(--border);
+	--octc-color-danger: var(--foreground);
+	--octc-color-code-bg: var(--code-surface);
+	--octc-color-code-text: var(--foreground);
+	--octc-color-code-frame-border: var(--border);
+	--octc-color-code-title-bg: var(--code-surface);
+	--octc-color-code-title-border: var(--border);
+	--octc-color-code-title-text: var(--muted-foreground);
+	--octc-font-mono: var(--font-mono);
 }
 
 @theme inline {

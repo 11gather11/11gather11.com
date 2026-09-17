@@ -23,6 +23,9 @@ export const STYLESHEET = 'src/styles/global.css'
 /** Embed card styles, a separate client input so only posts with embeds download them. */
 export const EMBED_STYLESHEET = 'src/styles/embeds.css'
 
+/** Reader chrome script, a separate client input so only blog posts download it. */
+export const READER_SCRIPT = 'src/client/reader-chrome.ts'
+
 /**
  * Picks the Content-Type for a non-HTML route from its path.
  *
@@ -60,6 +63,30 @@ function stylesheetHrefs(context: OxContentCustomHostRenderContext, entry: strin
 		throw new Error(css.diagnostics.map(({ message }) => message).join('\n'))
 	}
 	return css.stylesheets.map(({ href }) => href)
+}
+
+/**
+ * Resolves the URL of a script entry for the current run.
+ *
+ * The dev server serves the source module. The build asks Ox Content for the entry's hashed file from
+ * the client manifest.
+ *
+ * @param context - Route render context.
+ * @param entry - Project-relative script listed in the build's client inputs.
+ * @returns Script URLs to load as modules.
+ * @throws If the build manifest has no entry for the script.
+ */
+function scriptHrefs(context: OxContentCustomHostRenderContext, entry: string): string[] {
+	if (context.mode === 'serve') {
+		return [`/${entry}`]
+	}
+	const manifest = context.assets.clientManifest
+	if (manifest?.[entry] === undefined) {
+		throw new Error(`The client manifest has no entry for ${entry}`)
+	}
+	return context.assets
+		.document({ manifest, clientEntries: [entry] })
+		.scripts.flatMap(({ src }) => (src === undefined ? [] : [src]))
 }
 
 /**
@@ -106,6 +133,7 @@ async function renderPage(page: PageRoute, renderContext: OxContentCustomHostRen
 			// Syntax colours, written by Ox Content from the theme tokens in vite.config.ts.
 			syntaxStylesheet: renderContext.assets.themeTokens?.href,
 			embedStylesheets: stylesheetHrefs(renderContext, EMBED_STYLESHEET),
+			readerScripts: scriptHrefs(renderContext, READER_SCRIPT),
 		},
 		root: renderContext.root,
 		async renderMarkdown(source, documentPath) {

@@ -13,27 +13,6 @@
 @import '@ox-content/vite-plugin/styles/youtube.css' layer(embeds);
 
 /*
- * The embed sheets read Ox Content's --octc-* tokens, normally defined by its core.css, which this
- * site does not load. They are mapped onto the site's tokens from global.css so cards follow both
- * colour schemes.
- */
-.article-body {
-	--octc-color-bg: var(--background);
-	--octc-color-bg-alt: var(--code-surface);
-	--octc-color-text: var(--foreground);
-	--octc-color-text-muted: var(--muted-foreground);
-	--octc-color-primary: var(--foreground);
-	--octc-color-border: var(--border);
-	--octc-color-danger: var(--foreground);
-	--octc-color-code-bg: var(--code-surface);
-	--octc-color-code-frame-border: var(--border);
-	--octc-color-code-title-bg: var(--code-surface);
-	--octc-color-code-title-border: var(--border);
-	--octc-color-code-title-text: var(--muted-foreground);
-	--octc-font-mono: var(--font-mono);
-}
-
-/*
  * Full X cards set their own palette on the card, including a dark one chosen by
  * prefers-color-scheme through a high-specificity selector. Unlayered declarations beat every layer
  * regardless of specificity, so this block replaces that palette with the site's colours. X's link

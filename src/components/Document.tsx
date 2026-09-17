@@ -20,6 +20,8 @@ export type DocumentProps = {
 	highlightsCode?: boolean
 	/** Link the embed card stylesheets, for pages that render an embed. */
 	rendersEmbeds?: boolean
+	/** Load the reader chrome script, for pages with Copy and Back to top buttons; its styles are in global.css. */
+	readerChrome?: boolean
 	/** Site-relative Open Graph image path; pages without their own share the site-wide image. */
 	ogImage?: string
 	/** schema.org JSON-LD describing the page, from src/seo/structured-data.ts. */
@@ -49,6 +51,7 @@ export function Document({
 	publishedTime,
 	highlightsCode = false,
 	rendersEmbeds = false,
+	readerChrome = false,
 	ogImage = '/og.png',
 	structuredData,
 	assets,
@@ -100,6 +103,7 @@ export function Document({
 					<link rel='stylesheet' href={assets.syntaxStylesheet} />
 				)}
 				{rendersEmbeds && assets.embedStylesheets.map((href) => <link key={href} rel='stylesheet' href={href} />)}
+				{readerChrome && assets.readerScripts.map((src) => <script key={src} type='module' src={src} />)}
 			</head>
 			<body className='bg-background font-sans leading-7 text-foreground antialiased'>{children}</body>
 		</html>
