@@ -72,3 +72,51 @@
 .ox-ogp-card .ox-ogp-image {
 	aspect-ratio: 1200 / 630;
 }
+
+/*
+ * Twitch channel icon. Ox Content's video cards have no avatar slot, and it does not fetch Twitch
+ * metadata, so a post passes the channel's profile image as `image` (the og:image of the channel
+ * page). That attribute renders as a full-width thumbnail below the title; for a Twitch card this
+ * turns it into a 42px round icon beside the title, the size Ox Content uses for article avatars.
+ * The card's link is a grid, so the image and copy are placed side by side without new markup.
+ */
+.ox-provider-card--twitch .ox-provider-card__main:has(> .ox-provider-card__image) {
+	grid-template-columns: auto minmax(0, 1fr);
+
+	& > .ox-provider-card__header {
+		grid-column: 1 / -1;
+	}
+
+	& > .ox-provider-card__image {
+		grid-row: 2 / span 2;
+		grid-column: 1;
+		align-self: start;
+		width: 42px;
+		height: 42px;
+		margin: 0.5rem 0 0.8rem 0.9rem;
+		border: 0;
+		border-radius: 50%;
+	}
+
+	& > .ox-provider-card__body-wrap,
+	& > .ox-provider-card__meta {
+		grid-column: 2;
+		padding-left: 0.75rem;
+	}
+
+	/*
+	 * Without metrics there is no third row: the image takes only the title's row, so the title can
+	 * centre beside it. The image follows the copy in the markup, so the copy is no longer :last-child
+	 * and needs the bottom padding itself.
+	 */
+	&:not(:has(> .ox-provider-card__meta)) {
+		& > .ox-provider-card__image {
+			grid-row: 2;
+		}
+
+		& > .ox-provider-card__body-wrap {
+			align-self: center;
+			padding-bottom: 0.3rem;
+		}
+	}
+}
