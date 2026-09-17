@@ -143,6 +143,7 @@ const host = {
 		)
 		return [...table.values()].map((page): OxContentCustomHostRoute => ({
 			path: page.path,
+			inputPath: page.inputPath,
 			// Only directory paths are real pages; /404.html is served for every unknown URL and must
 			// stay out of the sitemap and llms.txt.
 			unlisted: !page.path.endsWith('/'),

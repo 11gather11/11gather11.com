@@ -26,8 +26,13 @@ export default defineConfig({
 		tailwindcss(),
 		oxContentCustomHost({
 			host: './src/host.ts',
-			// Pages are finished documents; Vite's HTML transform would inject its dev client script.
-			build: { transformHtml: false },
+			build: {
+				// Pages are finished documents; Vite's HTML transform would inject its dev client script.
+				transformHtml: false,
+				// Strips whitespace and comments from the written HTML; runs after rendering, so it cannot
+				// change what React or Ox Content produced.
+				minifyHtml: true,
+			},
 			oxContent: {
 				srcDir: 'src/content',
 				outDir: 'dist',

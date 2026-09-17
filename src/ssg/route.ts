@@ -36,6 +36,11 @@ export type RoutesContext = {
 export type PageRoute = {
 	/** Public URL path; see {@link outputFileName} for the accepted shapes. */
 	path: string
+	/**
+	 * Project-relative file the page is written in, whose git history dates the page in the sitemap.
+	 * Defaults to the page module; routes built from content, such as posts, point at that content.
+	 */
+	inputPath?: string
 	/** Text for HTML and XML routes; bytes for binary files such as generated images. */
 	render: (context: RenderContext) => MaybePromise<string | Uint8Array>
 }
@@ -83,7 +88,8 @@ export async function createRouteTable(
 				throw new Error(`Route ${route.path} is defined by both ${owner} and ${source}`)
 			}
 			owners.set(route.path, source)
-			table.set(route.path, route)
+			// Glob keys are root-absolute (/src/pages/…); inputPath is project-relative.
+			table.set(route.path, { ...route, inputPath: route.inputPath ?? source.replace(/^\//, '') })
 		}
 	}
 	return table
@@ -105,6 +111,20 @@ if (import.meta.vitest) {
 				context
 			)
 			expect([...table.keys()]).toEqual(['/', '/blog/', '/blog/rss.xml'])
+		})
+
+		test('dates routes by their page module unless they name their own source', async () => {
+			const table = await createRouteTable(
+				{
+					'/src/pages/index.tsx': { routes: () => [route('/')] },
+					'/src/pages/blog/[slug]/index.tsx': {
+						routes: () => [{ ...route('/blog/hello/'), inputPath: 'src/content/blog/hello/index.md' }],
+					},
+				},
+				context
+			)
+			expect(table.get('/')?.inputPath).toBe('src/pages/index.tsx')
+			expect(table.get('/blog/hello/')?.inputPath).toBe('src/content/blog/hello/index.md')
 		})
 
 		test('rejects two modules claiming one path', async () => {

@@ -18,6 +18,7 @@ export const routes: PageRoutes = ({ includeDrafts }) =>
 		},
 		{
 			path: `/blog/${post.slug}/`,
+			inputPath: post.file,
 			render: async ({ assets, renderMarkdown }) =>
 				renderHtml(
 					<SiteLayout
