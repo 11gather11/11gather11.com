@@ -8,6 +8,8 @@ export type SiteAssets = {
 	stylesheets: readonly string[]
 	/** Syntax colour stylesheet, linked only by pages that render highlighted code. */
 	syntaxStylesheet?: string
+	/** Embed card stylesheet URLs, linked only by pages that render an embed. */
+	embedStylesheets: readonly string[]
 }
 
 /** What a route receives when it renders. */

@@ -9,6 +9,7 @@ import type {
 
 import { rewriteCollectionAssetUrls } from '@ox-content/vite-plugin'
 
+import { hideTweetAvatarLinks } from './blog/embed-markup.ts'
 import { loadPosts } from './blog/posts.ts'
 import { labelTaskListItems } from './blog/task-list.ts'
 import { SITE } from './config/site.ts'
@@ -19,6 +20,9 @@ const modules = import.meta.glob<PageModule>('/src/pages/**/index.tsx', { eager:
 
 /** The Tailwind entry, built as a client input so the manifest knows its hashed URL. */
 export const STYLESHEET = 'src/styles/global.css'
+
+/** Embed card styles, a separate client input so only posts with embeds download them. */
+export const EMBED_STYLESHEET = 'src/styles/embeds.css'
 
 /**
  * Decides whether drafts are part of this run: previewed in the dev server, never built.
@@ -47,21 +51,22 @@ function contentType(path: string): string {
 }
 
 /**
- * Resolves the URLs of the site stylesheet for the current run.
+ * Resolves the URLs of a stylesheet entry for the current run.
  *
  * The build reads the hashed URL from the client manifest. The dev server links the source path
  * instead: Ox Content resolves dev stylesheets from Vite's module graph, which has no entry for the
  * stylesheet until a browser has requested it once, so the first page load would fail.
  *
  * @param context - Route render context.
+ * @param entry - Project-relative stylesheet listed in the build's client inputs.
  * @returns Stylesheet URLs to link, in order.
  * @throws If the build manifest has no entry for the stylesheet.
  */
-function stylesheetHrefs(context: OxContentCustomHostRenderContext): string[] {
+function stylesheetHrefs(context: OxContentCustomHostRenderContext, entry: string): string[] {
 	if (context.mode === 'serve') {
-		return [`/${STYLESHEET}`]
+		return [`/${entry}`]
 	}
-	const css = context.assets.stylesheets({ modules: [STYLESHEET] })
+	const css = context.assets.stylesheets({ modules: [entry] })
 	if (css.diagnostics.length > 0) {
 		throw new Error(css.diagnostics.map(({ message }) => message).join('\n'))
 	}
@@ -108,15 +113,16 @@ async function renderPage(page: PageRoute, renderContext: OxContentCustomHostRen
 	const dependencies: OxContentCustomHostDependency[] = []
 	const body = await page.render({
 		assets: {
-			stylesheets: stylesheetHrefs(renderContext),
+			stylesheets: stylesheetHrefs(renderContext, STYLESHEET),
 			// Syntax colours, written by Ox Content from the theme tokens in vite.config.ts.
 			syntaxStylesheet: renderContext.assets.themeTokens?.href,
+			embedStylesheets: stylesheetHrefs(renderContext, EMBED_STYLESHEET),
 		},
 		root: renderContext.root,
 		async renderMarkdown(source, documentPath) {
 			const result = await renderContext.markdown.render({ source, documentPath })
 			dependencies.push(...result.dependencies)
-			const html = labelTaskListItems(result.html)
+			const html = hideTweetAvatarLinks(labelTaskListItems(result.html))
 			// Point relative image URLs at the hashed copies planned in vite.config.ts.
 			const manifest = await renderContext.assets.collectionManifest()
 			return manifest === undefined ? html : rewriteCollectionAssetUrls({ html, pagePath: page.path, manifest }).html

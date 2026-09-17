@@ -1,3 +1,4 @@
+import { hasEmbeds } from '../../../blog/embeds.ts'
 import { loadPosts } from '../../../blog/posts.ts'
 import { renderOgImage } from '../../../og/render.ts'
 import { blogPostingStructuredData } from '../../../seo/structured-data.ts'
@@ -19,8 +20,9 @@ export const routes: PageRoutes = ({ includeDrafts }) =>
 		{
 			path: `/blog/${post.slug}/`,
 			inputPath: post.file,
-			render: async ({ assets, renderMarkdown }) =>
-				renderHtml(
+			render: async ({ assets, renderMarkdown }) => {
+				const html = await renderMarkdown(post.body, post.file)
+				return renderHtml(
 					<SiteLayout
 						title={post.title}
 						description={post.description}
@@ -38,6 +40,7 @@ export const routes: PageRoutes = ({ includeDrafts }) =>
 							lang: post.lang,
 						})}
 						highlightsCode
+						rendersEmbeds={hasEmbeds(html)}
 						assets={assets}
 					>
 						<article lang={post.lang}>
@@ -48,12 +51,10 @@ export const routes: PageRoutes = ({ includeDrafts }) =>
 							<p className='mt-6 text-xl text-muted-foreground'>{post.description}</p>
 							{/* The HTML comes from the post's own Markdown in this repository, rendered at build time by Ox Content. */}
 							{/* oxlint-disable-next-line react/no-danger */}
-							<div
-								className='article-body mt-12'
-								dangerouslySetInnerHTML={{ __html: await renderMarkdown(post.body, post.file) }}
-							/>
+							<div className='article-body mt-12' dangerouslySetInnerHTML={{ __html: html }} />
 						</article>
 					</SiteLayout>
-				),
+				)
+			},
 		},
 	])

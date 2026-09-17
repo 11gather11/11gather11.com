@@ -137,6 +137,24 @@ The same image with a title, which can become a caption, and explicit dimensions
 
 ![A gradient from ivory to navy](./gradient.png "A gradient from the site's ivory to its navy"){width=960 height=540}
 
+## Embeds
+
+A GitHub repository card:
+
+<GitHub repo="ubugeeei-prod/ox-content" />
+
+A link card built from a page's Open Graph metadata:
+
+<OgCard url="https://vite.dev" />
+
+A post on X, fetched at build time:
+
+<Tweet url="https://x.com/jack/status/20" />
+
+A Bluesky post:
+
+<Bluesky url="https://bsky.app/profile/danabra.mov/post/3mqzxmtfnxk2b" displayName="dan" handle="danabra.mov" dateTime="2026-07-19T23:46:21.231Z" dateLabel="Jul 19, 2026" replies="2" reposts="4" likes="72">the urge to fix everything incorrectly</Bluesky>
+
 ## Footnotes
 
 Here is a sentence with a footnote.[^1] And another one.[^note]

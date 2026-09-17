@@ -56,8 +56,21 @@ jobs:
           restore-keys: |
             og-images-${{ runner.os }}-
 
+      # Link card metadata, kept fresh for 30 days by the openGraph options in vite.config.ts. Restoring
+      # the newest entry means a build only fetches sites it has not seen recently.
+      - name: Restore link card cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/ox-content/ogp
+          key: ox-content-ogp-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            ox-content-ogp-${{ runner.os }}-
+
       - name: Build
         run: pnpm run build
+        env:
+          # GitHub cards call the GitHub API, whose unauthenticated limit is 60 requests an hour per IP.
+          GITHUB_TOKEN: ${{ github.token }}
 
       # The deploy job ships this exact build rather than rebuilding, so what was checked is what goes live.
       - name: Upload build

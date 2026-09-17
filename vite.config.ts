@@ -18,9 +18,9 @@ export default defineConfig({
 	build: {
 		outDir: 'dist',
 		emptyOutDir: true,
-		// The host looks up the stylesheet's hashed URL in the manifest.
+		// The host looks up the stylesheets' hashed URLs in the manifest.
 		manifest: true,
-		rollupOptions: { input: 'src/styles/global.css' },
+		rollupOptions: { input: ['src/styles/global.css', 'src/styles/embeds.css'] },
 	},
 	plugins: [
 		tailwindcss(),
@@ -50,6 +50,27 @@ export default defineConfig({
 				docs: false,
 				search: false,
 				siteMaps: true,
+				// Embed tags in posts become static cards at build time: no third-party widget script or iframe
+				// reaches the page.
+				embeds: {
+					// Fetched from the GitHub API on every build; CI passes GITHUB_TOKEN to stay under the rate limit.
+					github: true,
+					// Link metadata rarely changes, so entries on disk stay fresh for 30 days instead of the default
+					// hour, and CI restores the cache directory instead of refetching every site.
+					openGraph: { persistCache: true, cacheTTL: 30 * 24 * 60 * 60 * 1000 },
+					bluesky: true,
+					// Post JSON (.cache/ox-content/twitter) and downloaded media (public/ox-content/twitter) are
+					// committed, as ryoppippi.com does: builds do not depend on X being reachable, and images are
+					// served from this origin. Media fetched during a build lands in public/ after Vite has copied
+					// it, so run the build again, or preview with the dev server, after adding a post.
+					twitter: {
+						fetch: true,
+						appearance: 'full',
+						timeZone: 'Asia/Tokyo',
+						mediaOutputDir: 'public/ox-content/twitter',
+						mediaPublicPath: '/ox-content/twitter',
+					},
+				},
 				feeds: {
 					blog: {
 						collection: 'blog',

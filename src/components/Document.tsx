@@ -18,6 +18,8 @@ export type DocumentProps = {
 	publishedTime?: string
 	/** Link the syntax colour stylesheet, for pages that render highlighted code. */
 	highlightsCode?: boolean
+	/** Link the embed card stylesheets, for pages that render an embed. */
+	rendersEmbeds?: boolean
 	/** Site-relative Open Graph image path; pages without their own share the site-wide image. */
 	ogImage?: string
 	/** schema.org JSON-LD describing the page, from src/seo/structured-data.ts. */
@@ -46,6 +48,7 @@ export function Document({
 	ogType = 'website',
 	publishedTime,
 	highlightsCode = false,
+	rendersEmbeds = false,
 	ogImage = '/og.png',
 	structuredData,
 	assets,
@@ -96,6 +99,7 @@ export function Document({
 				{highlightsCode && assets.syntaxStylesheet !== undefined && (
 					<link rel='stylesheet' href={assets.syntaxStylesheet} />
 				)}
+				{rendersEmbeds && assets.embedStylesheets.map((href) => <link key={href} rel='stylesheet' href={href} />)}
 			</head>
 			<body className='bg-background font-sans leading-7 text-foreground antialiased'>{children}</body>
 		</html>

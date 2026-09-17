@@ -1,0 +1,73 @@
+/*
+ * Styles for embed cards (the embeds option in vite.config.ts), linked only by posts that contain one
+ * so every other page keeps its smaller stylesheet. The cards use Ox Content's official stylesheets.
+ *
+ * Loaded after global.css, the imported sheets land in a layer declared after Tailwind's. Their rules
+ * that reset images, quotes and figures inside a card therefore win over the .article-body element
+ * styles in the components layer.
+ */
+@import '@ox-content/vite-plugin/styles/ogp.css' layer(embeds);
+@import '@ox-content/vite-plugin/styles/github.css' layer(embeds);
+@import '@ox-content/vite-plugin/styles/social.css' layer(embeds);
+@import '@ox-content/vite-plugin/styles/twitter-full.css' layer(embeds);
+
+/*
+ * The embed sheets read Ox Content's --octc-* tokens, normally defined by its core.css, which this
+ * site does not load. They are mapped onto the site's tokens from global.css so cards follow both
+ * colour schemes.
+ */
+.article-body {
+	--octc-color-bg: var(--background);
+	--octc-color-bg-alt: var(--code-surface);
+	--octc-color-text: var(--foreground);
+	--octc-color-text-muted: var(--muted-foreground);
+	--octc-color-primary: var(--foreground);
+	--octc-color-border: var(--border);
+	--octc-color-danger: var(--foreground);
+	--octc-color-code-bg: var(--code-surface);
+	--octc-color-code-frame-border: var(--border);
+	--octc-color-code-title-bg: var(--code-surface);
+	--octc-color-code-title-border: var(--border);
+	--octc-color-code-title-text: var(--muted-foreground);
+	--octc-font-mono: var(--font-mono);
+}
+
+/*
+ * Full X cards set their own palette on the card, including a dark one chosen by
+ * prefers-color-scheme through a high-specificity selector. Unlayered declarations beat every layer
+ * regardless of specificity, so this block replaces that palette with the site's colours. X's link
+ * blue is dropped: rgb(0, 111, 214) on ivory is 4.47:1, just under WCAG AA.
+ */
+.ox-tweet--full {
+	--ox-tweet-border: 1px solid var(--border);
+	--ox-tweet-font-color: var(--foreground);
+	--ox-tweet-font-color-secondary: var(--muted-foreground);
+	--ox-tweet-bg: var(--background);
+	--ox-tweet-bg-hover: var(--code-surface);
+	--ox-tweet-color-blue-text: var(--foreground);
+	--ox-tweet-color-blue-hover: var(--code-surface);
+	--ox-tweet-verified-blue: var(--foreground);
+}
+
+/* Ox Content sizes the Bluesky author name but not the handle, which would inherit the article's large body text. */
+.ox-bluesky__handle {
+	font-size: var(--text-sm);
+}
+
+/*
+ * WCAG 2.2 target size: the author name, handle and Follow links sit on two tight lines beside the
+ * avatar. A 24px minimum height per line meets the 24px target and still matches the 48px avatar.
+ */
+.ox-tweet--full :is(.ox-tweet__author-name, .ox-tweet__author-meta) {
+	min-height: 24px;
+	align-items: center;
+}
+
+/*
+ * Open Graph images are hot-linked with no width or height attributes. A fixed ratio reserves their
+ * space before they load, so the card does not shift; object-fit: contain from Ox Content letterboxes
+ * images of other shapes.
+ */
+.ox-ogp-card .ox-ogp-image {
+	aspect-ratio: 1200 / 630;
+}
