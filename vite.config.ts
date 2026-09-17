@@ -5,6 +5,10 @@ import { configDefaults, defineConfig } from 'vite-plus'
 import { loadPosts } from './src/blog/posts.ts'
 import { syntaxTheme } from './src/config/syntax-theme.ts'
 
+// How long fetched embed metadata on disk counts as fresh: link titles, article counts and package
+// versions rarely change enough to be worth refetching on every build.
+const METADATA_CACHE_TTL = 30 * 24 * 60 * 60 * 1000
+
 const IGNORED_PATHS = ['dist/**', 'node_modules/**', '.direnv/**', '.wrangler/**']
 
 export default defineConfig({
@@ -56,9 +60,17 @@ export default defineConfig({
 					// Fetched from the GitHub API on every build; CI passes GITHUB_TOKEN to stay under the rate limit.
 					github: true,
 					// Link metadata rarely changes, so entries on disk stay fresh for 30 days instead of the default
-					// hour, and CI restores the cache directory instead of refetching every site.
-					openGraph: { persistCache: true, cacheTTL: 30 * 24 * 60 * 60 * 1000 },
+					// hour, and CI restores the cache directories instead of refetching every site.
+					openGraph: { persistCache: true, cacheTTL: METADATA_CACHE_TTL },
 					bluesky: true,
+					// Article, package and video cards fetch their metadata the same way and share
+					// .cache/ox-content/providers. Twitch gets no `parent`, so its cards stay static instead of
+					// loading the player iframe. YouTube needs no option: <YouTube> is always expanded, into a lazy
+					// youtube-nocookie.com iframe.
+					qiita: { persistCache: true, cacheTTL: METADATA_CACHE_TTL },
+					zenn: { persistCache: true, cacheTTL: METADATA_CACHE_TTL },
+					packageRegistry: { persistCache: true, cacheTTL: METADATA_CACHE_TTL },
+					twitch: { persistCache: true, cacheTTL: METADATA_CACHE_TTL },
 					// Post JSON (.cache/ox-content/twitter) and downloaded media (public/ox-content/twitter) are
 					// committed, as ryoppippi.com does: builds do not depend on X being reachable, and images are
 					// served from this origin. Media fetched during a build lands in public/ after Vite has copied

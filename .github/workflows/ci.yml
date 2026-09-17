@@ -56,12 +56,14 @@ jobs:
           restore-keys: |
             og-images-${{ runner.os }}-
 
-      # Link card metadata, kept fresh for 30 days by the openGraph options in vite.config.ts. Restoring
-      # the newest entry means a build only fetches sites it has not seen recently.
-      - name: Restore link card cache
+      # Link, article, package and video card metadata, kept fresh for 30 days by the embeds options in
+      # vite.config.ts. Restoring the newest entry means a build only fetches pages it has not seen recently.
+      - name: Restore embed metadata cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: .cache/ox-content/ogp
+          path: |
+            .cache/ox-content/ogp
+            .cache/ox-content/providers
           key: ox-content-ogp-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
             ox-content-ogp-${{ runner.os }}-

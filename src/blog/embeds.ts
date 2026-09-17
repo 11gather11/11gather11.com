@@ -5,12 +5,12 @@
  * Markdown never produces them.
  *
  * @param html - HTML rendered from a post.
- * @returns True when the HTML has a GitHub, Open Graph, X or Bluesky card.
+ * @returns True when the HTML has an embed: a GitHub, link, X, Bluesky or provider card, or a YouTube player.
  * @example
  * hasEmbeds('<a class="ox-ogp-card" href="https://vite.dev">…</a>') // true
  */
 export function hasEmbeds(html: string): boolean {
-	return /class="ox-(?:github|ogp|tweet|bluesky)\b/.test(html)
+	return /class="ox-(?:github|ogp|tweet|bluesky|provider-card|youtube)\b/.test(html)
 }
 
 if (import.meta.vitest) {
@@ -21,6 +21,8 @@ if (import.meta.vitest) {
 		expect(hasEmbeds('<a class="ox-ogp-card" href="#">')).toBe(true)
 		expect(hasEmbeds('<figure class="ox-tweet ox-tweet--full">')).toBe(true)
 		expect(hasEmbeds('<div class="ox-bluesky">')).toBe(true)
+		expect(hasEmbeds('<article class="ox-provider-card ox-provider-card--npm">')).toBe(true)
+		expect(hasEmbeds('<div class="ox-youtube" style="aspect-ratio:16/9">')).toBe(true)
 	})
 
 	test('ignores other Ox Content markup such as callouts and figures', () => {

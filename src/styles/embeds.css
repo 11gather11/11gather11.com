@@ -10,6 +10,7 @@
 @import '@ox-content/vite-plugin/styles/github.css' layer(embeds);
 @import '@ox-content/vite-plugin/styles/social.css' layer(embeds);
 @import '@ox-content/vite-plugin/styles/twitter-full.css' layer(embeds);
+@import '@ox-content/vite-plugin/styles/youtube.css' layer(embeds);
 
 /*
  * The embed sheets read Ox Content's --octc-* tokens, normally defined by its core.css, which this
