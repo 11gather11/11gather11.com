@@ -12,6 +12,19 @@ runs:
     - name: Install Nix
       uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
 
+    # pnpm checks the lockfile against minimumReleaseAge and trustPolicy before installing, 11.5 s of
+    # registry requests. It records each pass in lockfile-verified.jsonl, keyed by the lockfile's hash
+    # and the policy settings, and skips the check when the record matches, so restoring this small
+    # file is enough; a changed lockfile or policy simply misses and is checked again. GitHub scopes
+    # caches by branch, so a pull request cannot plant a record that main would read.
+    # Caching pnpm's package store (about 500 MB) and the Nix store was also measured: restoring them
+    # took as long as downloading their contents.
+    - name: Restore pnpm lockfile verification
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/pnpm/lockfile-verified.jsonl
+        key: pnpm-verified-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml') }}
+
     - name: Install dependencies
       shell: bash
       run: nix develop .#${{ inputs.shell }} --command pnpm install --frozen-lockfile
