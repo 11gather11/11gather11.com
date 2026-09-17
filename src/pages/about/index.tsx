@@ -1,3 +1,4 @@
+import { ExternalLink } from '../../components/ExternalLink.tsx'
 import { SiteLayout } from '../../components/SiteLayout.tsx'
 import { OWNER, SOCIALS } from '../../config/site.ts'
 import { profileStructuredData } from '../../seo/structured-data.ts'
@@ -32,16 +33,22 @@ export const routes: PageRoutes = () => [
 						</p>
 						<ul className='mt-6 flex flex-col gap-4 text-lg sm:flex-row sm:gap-10'>
 							<li>
-								<a href={SOCIALS.twitch} className='inline-flex items-center gap-3 underline-offset-4 hover:underline'>
+								<ExternalLink
+									href={SOCIALS.twitch}
+									className='inline-flex items-center gap-3 underline-offset-4 hover:underline'
+								>
 									<span className='iconify simple-icons--twitch size-7' aria-hidden='true' />
 									Twitch
-								</a>
+								</ExternalLink>
 							</li>
 							<li>
-								<a href={SOCIALS.youtube} className='inline-flex items-center gap-3 underline-offset-4 hover:underline'>
+								<ExternalLink
+									href={SOCIALS.youtube}
+									className='inline-flex items-center gap-3 underline-offset-4 hover:underline'
+								>
 									<span className='iconify simple-icons--youtube size-7' aria-hidden='true' />
 									YouTube
-								</a>
+								</ExternalLink>
 							</li>
 						</ul>
 					</article>

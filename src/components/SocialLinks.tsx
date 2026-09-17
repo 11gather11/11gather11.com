@@ -1,4 +1,5 @@
 import { SOCIALS } from '../config/site.ts'
+import { ExternalLink } from './ExternalLink.tsx'
 
 /** Props for {@link SocialLinks}. */
 export type SocialLinksProps = {
@@ -9,7 +10,7 @@ export type SocialLinksProps = {
 }
 
 /**
- * Links to GitHub, Twitch and YouTube, each with its brand icon and a visible label.
+ * Links to GitHub, Twitch and YouTube, each with its brand icon and a visible label, opened in a new tab.
  *
  * The icon classes are written out per link rather than mapped from data so the Tailwind scanner
  * and shadcn/require-static-classes can both read them.
@@ -21,22 +22,22 @@ export function SocialLinks({ className, linkClassName }: SocialLinksProps) {
 	return (
 		<ul className={className}>
 			<li>
-				<a href={SOCIALS.github} className={linkClassName}>
+				<ExternalLink href={SOCIALS.github} className={linkClassName}>
 					<span className='iconify simple-icons--github size-4' aria-hidden='true' />
 					GitHub
-				</a>
+				</ExternalLink>
 			</li>
 			<li>
-				<a href={SOCIALS.twitch} className={linkClassName}>
+				<ExternalLink href={SOCIALS.twitch} className={linkClassName}>
 					<span className='iconify simple-icons--twitch size-4' aria-hidden='true' />
 					Twitch
-				</a>
+				</ExternalLink>
 			</li>
 			<li>
-				<a href={SOCIALS.youtube} className={linkClassName}>
+				<ExternalLink href={SOCIALS.youtube} className={linkClassName}>
 					<span className='iconify simple-icons--youtube size-4' aria-hidden='true' />
 					YouTube
-				</a>
+				</ExternalLink>
 			</li>
 		</ul>
 	)
