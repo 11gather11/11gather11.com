@@ -127,9 +127,9 @@ A plain code block without a language, with a line long enough to overflow horiz
 
 ![The site icon](/icon.svg)
 
-A relative image stored next to the post, published with a content hash:
+A relative image stored in the post's directory, published with a content hash:
 
-![A gradient from ivory to navy](./images/markdown-showcase-gradient.png)
+![A gradient from ivory to navy](./gradient.png)
 
 ## Footnotes
 

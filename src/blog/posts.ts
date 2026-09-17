@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, type Dirent } from 'node:fs'
 import path from 'node:path'
 
 import { listPosts, parsePost, readingTime, type PostSource } from './post.ts'
@@ -27,9 +27,9 @@ const POSTS_DIR = 'src/content/blog'
  * @throws If any post has invalid frontmatter, which fails the build.
  */
 export function loadPosts(includeDrafts: boolean): Post[] {
-	let names: string[]
+	let entries: Dirent[]
 	try {
-		names = readdirSync(POSTS_DIR).filter((name) => name.endsWith('.md'))
+		entries = readdirSync(POSTS_DIR, { withFileTypes: true })
 	} catch (error) {
 		// No posts directory yet simply means no posts.
 		if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -37,9 +37,25 @@ export function loadPosts(includeDrafts: boolean): Post[] {
 		}
 		throw error
 	}
-	const parsed = names.map((name) => {
-		const file = path.posix.join(POSTS_DIR, name)
-		return { ...parsePost(file, readFileSync(file, 'utf8')), file }
-	})
+	const parsed = entries
+		// Dotfiles such as .DS_Store are editor and OS noise, not posts.
+		.filter((entry) => !entry.name.startsWith('.'))
+		.map((entry) => {
+			// A loose file here is almost certainly a post in the old <slug>.md layout; fail loudly rather
+			// than silently leaving it unpublished.
+			const file = entry.isDirectory()
+				? path.posix.join(POSTS_DIR, entry.name, 'index.md')
+				: path.posix.join(POSTS_DIR, entry.name)
+			let source: string
+			try {
+				source = readFileSync(file, 'utf8')
+			} catch (error) {
+				if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+					throw new Error(`Invalid post ${file}: every directory in ${POSTS_DIR} needs an index.md`)
+				}
+				throw error
+			}
+			return { ...parsePost(file, source), file }
+		})
 	return listPosts(parsed, includeDrafts).map((post) => ({ ...post, minutes: readingTime(post.body, post.lang) }))
 }

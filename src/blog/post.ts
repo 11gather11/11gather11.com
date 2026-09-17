@@ -17,7 +17,7 @@ export type PostFrontmatter = {
 
 /** A post's source split into metadata and Markdown body. */
 export type PostSource = PostFrontmatter & {
-	/** URL segment, taken from the file name. */
+	/** URL segment, taken from the name of the post's directory. */
 	slug: string
 	/** Markdown body without the frontmatter. */
 	body: string
@@ -35,21 +35,27 @@ const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
  * Validation fails loudly at build time rather than rendering a page with a missing title or an
  * `Invalid Date`, and names the file and field so the fix is obvious.
  *
- * @param file - Path of the post, used for its slug and in error messages.
+ * @param file - Path of the post's `index.md`; its directory name is the slug, and the path is used in
+ *   error messages.
  * @param source - Raw file contents.
  * @returns The post's metadata and Markdown body.
  * @throws If the frontmatter is missing, a required field is absent, or a value has the wrong shape.
  * @example
- * parsePost('src/content/blog/hello-world.md', '---\ntitle: Hello\n...')
+ * parsePost('src/content/blog/hello-world/index.md', '---\ntitle: Hello\n...')
  */
 export function parsePost(file: string, source: string): PostSource {
 	const fail = (message: string): never => {
 		throw new Error(`Invalid post ${file}: ${message}`)
 	}
 
-	const slug = file.slice(file.lastIndexOf('/') + 1).replace(/\.md$/, '')
+	// Posts live in <slug>/index.md so images and other files sit next to the Markdown that uses them.
+	const segments = file.split('/')
+	if (segments.at(-1) !== 'index.md' || segments.length < 2) {
+		fail('posts must be written as <slug>/index.md')
+	}
+	const slug = segments.at(-2) ?? ''
 	if (!SLUG.test(slug)) {
-		fail(`file name "${slug}" must be lower-case words joined by hyphens`)
+		fail(`directory name "${slug}" must be lower-case words joined by hyphens`)
 	}
 
 	const match = FRONTMATTER.exec(source)
@@ -141,7 +147,7 @@ export function listPosts<T extends Pick<PostSource, 'date' | 'draft' | 'slug'>>
 if (import.meta.vitest) {
 	const { describe, expect, test } = import.meta.vitest
 
-	const file = 'src/content/blog/hello-world.md'
+	const file = 'src/content/blog/hello-world/index.md'
 	const post = (frontmatter: string, body = 'Body text.') => `---\n${frontmatter}\n---\n${body}`
 
 	describe('parsePost', () => {
@@ -178,8 +184,14 @@ if (import.meta.vitest) {
 		})
 
 		test('rejects a slug that would need escaping in a URL', () => {
-			expect(() => parsePost('src/content/blog/Hello World.md', post('title: t'))).toThrow(
+			expect(() => parsePost('src/content/blog/Hello World/index.md', post('title: t'))).toThrow(
 				'must be lower-case words joined by hyphens'
+			)
+		})
+
+		test('rejects a post that is not an index.md inside its own directory', () => {
+			expect(() => parsePost('src/content/blog/hello-world.md', post('title: t'))).toThrow(
+				'posts must be written as <slug>/index.md'
 			)
 		})
 	})
