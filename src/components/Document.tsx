@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { SITE } from '../config/site.ts'
+import { serializeStructuredData, type StructuredData } from '../seo/structured-data.ts'
 import type { SiteAssets } from '../ssg/route.ts'
 
 /** Props for {@link Document}. */
@@ -19,6 +20,8 @@ export type DocumentProps = {
 	highlightsCode?: boolean
 	/** Site-relative Open Graph image path; pages without their own share the site-wide image. */
 	ogImage?: string
+	/** schema.org JSON-LD describing the page, from src/seo/structured-data.ts. */
+	structuredData?: StructuredData
 	assets: SiteAssets
 	children: ReactNode
 }
@@ -44,6 +47,7 @@ export function Document({
 	publishedTime,
 	highlightsCode = false,
 	ogImage = '/og.png',
+	structuredData,
 	assets,
 	children,
 }: DocumentProps) {
@@ -76,6 +80,15 @@ export function Document({
 				<meta property='og:image:alt' content={`${SITE.name} logo on an ivory and navy background`} />
 				{publishedTime !== undefined && <meta property='article:published_time' content={publishedTime} />}
 				<meta name='twitter:card' content='summary_large_image' />
+				<meta name='twitter:site' content={SITE.xHandle} />
+				{structuredData !== undefined && (
+					<script
+						type='application/ld+json'
+						// JSON data, not script: serializeStructuredData escapes `<` so it cannot close the element.
+						// oxlint-disable-next-line react/no-danger
+						dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
+					/>
+				)}
 
 				{assets.stylesheets.map((href) => (
 					<link key={href} rel='stylesheet' href={href} />

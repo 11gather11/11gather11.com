@@ -1,3 +1,5 @@
+import { SOCIALS } from '../config/site.ts'
+
 /** Props for {@link SocialLinks}. */
 export type SocialLinksProps = {
 	/** Classes for the list, such as its flex direction and gap. */
@@ -19,19 +21,19 @@ export function SocialLinks({ className, linkClassName }: SocialLinksProps) {
 	return (
 		<ul className={className}>
 			<li>
-				<a href='https://github.com/11gather11' className={linkClassName}>
+				<a href={SOCIALS.github} className={linkClassName}>
 					<span className='iconify simple-icons--github size-4' aria-hidden='true' />
 					GitHub
 				</a>
 			</li>
 			<li>
-				<a href='https://www.twitch.tv/igara4ryusei' className={linkClassName}>
+				<a href={SOCIALS.twitch} className={linkClassName}>
 					<span className='iconify simple-icons--twitch size-4' aria-hidden='true' />
 					Twitch
 				</a>
 			</li>
 			<li>
-				<a href='https://www.youtube.com/@igara4ryusei' className={linkClassName}>
+				<a href={SOCIALS.youtube} className={linkClassName}>
 					<span className='iconify simple-icons--youtube size-4' aria-hidden='true' />
 					YouTube
 				</a>

@@ -1,4 +1,6 @@
 import { SiteLayout } from '../../components/SiteLayout.tsx'
+import { OWNER, SOCIALS } from '../../config/site.ts'
+import { profileStructuredData } from '../../seo/structured-data.ts'
 import { renderHtml } from '../../ssg/html.ts'
 import type { PageRoutes } from '../../ssg/route.ts'
 
@@ -10,11 +12,17 @@ export const routes: PageRoutes = () => [
 		path: '/about/',
 		render: ({ assets }) =>
 			renderHtml(
-				<SiteLayout title='About' description={DESCRIPTION} pathname='/about/' assets={assets}>
+				<SiteLayout
+					title='About'
+					description={DESCRIPTION}
+					pathname='/about/'
+					structuredData={profileStructuredData('/about/')}
+					assets={assets}
+				>
 					<article>
 						<h1 className='text-4xl font-bold tracking-tight sm:text-6xl'>About</h1>
 						<p className='mt-8 text-2xl font-semibold tracking-tight sm:text-3xl'>
-							Ryusei Igarashi <span lang='ja'>(五十嵐 隆晟)</span>
+							{OWNER.name} <span lang='ja'>({OWNER.japaneseName})</span>
 						</p>
 						<p className='mt-2 text-lg text-muted-foreground'>I'm a software engineer.</p>
 
@@ -24,19 +32,13 @@ export const routes: PageRoutes = () => [
 						</p>
 						<ul className='mt-6 flex flex-col gap-4 text-lg sm:flex-row sm:gap-10'>
 							<li>
-								<a
-									href='https://www.twitch.tv/igara4ryusei'
-									className='inline-flex items-center gap-3 underline-offset-4 hover:underline'
-								>
+								<a href={SOCIALS.twitch} className='inline-flex items-center gap-3 underline-offset-4 hover:underline'>
 									<span className='iconify simple-icons--twitch size-7' aria-hidden='true' />
 									Twitch
 								</a>
 							</li>
 							<li>
-								<a
-									href='https://www.youtube.com/@igara4ryusei'
-									className='inline-flex items-center gap-3 underline-offset-4 hover:underline'
-								>
+								<a href={SOCIALS.youtube} className='inline-flex items-center gap-3 underline-offset-4 hover:underline'>
 									<span className='iconify simple-icons--youtube size-7' aria-hidden='true' />
 									YouTube
 								</a>

@@ -2,6 +2,7 @@ import { Document } from '../components/Document.tsx'
 import { Logo } from '../components/Logo.tsx'
 import { SocialLinks } from '../components/SocialLinks.tsx'
 import { NAV, SITE } from '../config/site.ts'
+import { homeStructuredData } from '../seo/structured-data.ts'
 import { renderHtml } from '../ssg/html.ts'
 import type { PageRoutes } from '../ssg/route.ts'
 
@@ -20,7 +21,7 @@ export const routes: PageRoutes = () => [
 		path: '/',
 		render: ({ assets }) =>
 			renderHtml(
-				<Document description={DESCRIPTION} pathname='/' assets={assets}>
+				<Document description={DESCRIPTION} pathname='/' structuredData={homeStructuredData()} assets={assets}>
 					<div className='relative grid min-h-dvh grid-rows-2 md:grid-cols-2 md:grid-rows-1'>
 						<main className='flex flex-col justify-center px-8 pb-16 md:px-16 md:pr-24 md:pb-0 lg:px-24 lg:pr-32'>
 							<h1 className='text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl'>{SITE.name}</h1>

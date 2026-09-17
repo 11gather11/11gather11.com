@@ -1,5 +1,6 @@
 import { loadPosts } from '../../../blog/posts.ts'
 import { renderOgImage } from '../../../og/render.ts'
+import { blogPostingStructuredData } from '../../../seo/structured-data.ts'
 import { SiteLayout } from '../../../components/SiteLayout.tsx'
 import { renderHtml } from '../../../ssg/html.ts'
 import type { PageRoutes } from '../../../ssg/route.ts'
@@ -26,6 +27,15 @@ export const routes: PageRoutes = ({ includeDrafts }) =>
 						ogType='article'
 						publishedTime={post.date}
 						ogImage={`/og/blog/${post.slug}.png`}
+						structuredData={blogPostingStructuredData({
+							title: post.title,
+							description: post.description,
+							pathname: `/blog/${post.slug}/`,
+							image: `/og/blog/${post.slug}.png`,
+							date: post.date,
+							updated: post.updated,
+							lang: post.lang,
+						})}
 						highlightsCode
 						assets={assets}
 					>
