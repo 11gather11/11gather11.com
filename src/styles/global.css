@@ -37,6 +37,32 @@
 }
 
 /*
+ * Local faces resized to Geist's metrics, shown while Geist downloads (font-display: swap). Without
+ * them Latin text first renders in the next family that has the glyphs, such as Hiragino Sans, whose
+ * wider letters reflow every line when Geist arrives: Lighthouse measured a 0.076 layout shift on a
+ * long post. The overrides scale the fallback's average English letter width and vertical metrics to
+ * Geist's, computed from Geist-Regular and GeistMono-Regular with fontTools as next/font does.
+ * Neither local font has Japanese glyphs, so Japanese still falls through to the system gothic.
+ */
+@font-face {
+	font-family: 'Geist Fallback';
+	src: local('Arial');
+	size-adjust: 105.48%;
+	ascent-override: 95.28%;
+	descent-override: 27.97%;
+	line-gap-override: 0%;
+}
+
+@font-face {
+	font-family: 'Geist Mono Fallback';
+	src: local('Courier New');
+	size-adjust: 99.98%;
+	ascent-override: 100.52%;
+	descent-override: 29.5%;
+	line-gap-override: 0%;
+}
+
+/*
  * Colour tokens, built from two brand colours: ivory #f8f3e8 and navy #15264a.
  *
  * The page uses one colour for its background and the other for text; the header and footer
@@ -96,9 +122,10 @@
 	 * stylesheet of every page, plus 300 KB to 1 MB of font files per Japanese post.
 	 */
 	--font-sans:
-		'Geist Variable', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'BIZ UDGothic', Meiryo, 'Noto Sans CJK JP',
-		'Noto Sans JP', sans-serif;
-	--font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, 'BIZ UDGothic', monospace;
+		'Geist Variable', 'Geist Fallback', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'BIZ UDGothic', Meiryo,
+		'Noto Sans CJK JP', 'Noto Sans JP', sans-serif;
+	--font-mono:
+		'Geist Mono Variable', 'Geist Mono Fallback', ui-monospace, SFMono-Regular, Menlo, 'BIZ UDGothic', monospace;
 }
 
 @layer base {
