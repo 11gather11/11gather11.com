@@ -7,6 +7,8 @@ export const SITE = {
 	defaultLang: 'en',
 	/** X account credited on link cards through `twitter:site`. */
 	xHandle: '@11gather11',
+	/** UTC offset of the owner's time zone (Asia/Tokyo, no daylight saving), for post dates. */
+	utcOffset: '+09:00',
 } as const
 
 /** The person behind the site, for the About page and structured data. */

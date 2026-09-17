@@ -1,4 +1,5 @@
 import { OWNER, SITE, SOCIALS } from '../config/site.ts'
+import { postDateTime } from './date-time.ts'
 
 /** A schema.org JSON-LD document. */
 export type StructuredData = Readonly<Record<string, unknown>>
@@ -93,7 +94,8 @@ export type BlogPostingInput = {
  * Structured data for a blog post.
  *
  * `dateModified` falls back to the publication date, since Google recommends both and an unedited
- * post was last modified when it was published.
+ * post was last modified when it was published. Both are date-times in the owner's time zone; see
+ * {@link postDateTime}.
  *
  * @param post - Title, dates, language, URL and image of the post.
  * @returns A BlogPosting JSON-LD document whose author is the site's Person.
@@ -111,8 +113,8 @@ export function blogPostingStructuredData(post: BlogPostingInput): StructuredDat
 		headline: post.title,
 		description: post.description,
 		image: new URL(post.image, SITE.origin).href,
-		datePublished: post.date,
-		dateModified: post.updated ?? post.date,
+		datePublished: postDateTime(post.date),
+		dateModified: postDateTime(post.updated ?? post.date),
 		inLanguage: post.lang,
 		isPartOf: { '@id': WEBSITE_ID },
 		author: person(),
@@ -152,15 +154,17 @@ if (import.meta.vitest) {
 				'@type': 'BlogPosting',
 				url: 'https://11gather11.com/blog/hello/',
 				image: 'https://11gather11.com/og/blog/hello.png',
-				datePublished: '2026-09-17',
+				datePublished: '2026-09-17T00:00:00+09:00',
 				inLanguage: 'ja',
 				author: { '@type': 'Person', '@id': 'https://11gather11.com/#person', name: 'Ryusei Igarashi' },
 			})
 		})
 
 		test('uses the publication date as dateModified until the post is updated', () => {
-			expect(blogPostingStructuredData(input).dateModified).toBe('2026-09-17')
-			expect(blogPostingStructuredData({ ...input, updated: '2026-10-01' }).dateModified).toBe('2026-10-01')
+			expect(blogPostingStructuredData(input).dateModified).toBe('2026-09-17T00:00:00+09:00')
+			expect(blogPostingStructuredData({ ...input, updated: '2026-10-01' }).dateModified).toBe(
+				'2026-10-01T00:00:00+09:00'
+			)
 		})
 	})
 

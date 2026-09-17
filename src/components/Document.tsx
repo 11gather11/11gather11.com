@@ -14,7 +14,7 @@ export type DocumentProps = {
 	lang?: string
 	/** Open Graph object type: `article` for blog posts, `website` for everything else. */
 	ogType?: 'website' | 'article'
-	/** Publication date of an article, `YYYY-MM-DD`. */
+	/** Publication date-time of an article, ISO 8601 with a UTC offset. */
 	publishedTime?: string
 	/** Link the syntax colour stylesheet, for pages that render highlighted code. */
 	highlightsCode?: boolean
