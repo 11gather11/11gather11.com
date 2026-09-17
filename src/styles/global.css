@@ -100,6 +100,13 @@
 	.article-body {
 		font-size: var(--text-lg);
 		line-height: 1.8;
+		/*
+		 * BudouX (vite.config.ts) marks Japanese phrase boundaries with zero-width spaces. keep-all stops
+		 * the browser from breaking inside words between those marks; anywhere still lets an unbroken
+		 * string such as a long URL wrap instead of overflowing a phone screen.
+		 */
+		word-break: keep-all;
+		overflow-wrap: anywhere;
 
 		& > * + * {
 			margin-top: 1.25em;
@@ -137,6 +144,33 @@
 		& a {
 			text-decoration: underline;
 			text-underline-offset: 4px;
+		}
+
+		/*
+		 * The `#` permalink Ox Content appends to each heading. Hidden until the heading is hovered or the
+		 * link is focused, so it does not clutter the text; always shown on touch screens, which cannot
+		 * hover.
+		 */
+		& .header-anchor {
+			margin-inline-start: 0.35em;
+			color: var(--color-muted-foreground);
+			font-weight: 400;
+			text-decoration: none;
+			opacity: 0;
+			transition: opacity 150ms;
+
+			@media (prefers-reduced-motion: reduce) {
+				transition: none;
+			}
+
+			@media (hover: none) {
+				opacity: 1;
+			}
+		}
+
+		& :is(h2, h3, h4, h5, h6):hover > .header-anchor,
+		& .header-anchor:focus-visible {
+			opacity: 1;
 		}
 
 		& ul,
@@ -244,6 +278,14 @@
 			max-width: 100%;
 			height: auto;
 			border-radius: var(--radius-md);
+		}
+
+		/* Images with a Markdown title, which Ox Content wraps in a figure with the title as caption. */
+		& figcaption {
+			margin-top: 0.6em;
+			font-size: var(--text-sm);
+			color: var(--color-muted-foreground);
+			text-align: center;
 		}
 
 		& kbd {

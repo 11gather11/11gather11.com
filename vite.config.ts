@@ -33,6 +33,13 @@ export default defineConfig({
 				outDir: 'dist',
 				gfm: true,
 				highlight: true,
+				// Visible `#` links next to headings, reusing the heading ids.
+				headingPermalinks: true,
+				// Title text becomes a <figcaption>, images load lazily, and {width= height=} sets dimensions.
+				images: true,
+				// Marks Japanese phrase boundaries at build time; `word-break: keep-all` in the article styles
+				// then wraps only at those boundaries instead of in the middle of words.
+				budoux: true,
 				// No sanitizer: every post is written in this repository, and the sanitizer's fixed
 				// attribute allow list drops things posts need, such as table column alignment.
 				docs: false,

@@ -28,6 +28,8 @@ line two after two trailing spaces.
 
 日本語の段落です。**強調**や_斜体_、`インラインコード`も混ぜて、行の高さと折り返しを確認します。English words mixed into Japanese text.
 
+日本語の文章は単語の間にスペースを入れないため、ブラウザは文字の途中でも自由に折り返してしまい、「シンタックスハイライト」や「アクセシビリティ」のような長い言葉が行の終わりで二つに分かれることがあります。文節の区切りをあらかじめ推定しておけば、読みやすい位置で改行できるようになり、スマートフォンのような狭い画面でも文章の流れを追いやすくなります。
+
 ## Lists
 
 - Unordered item
@@ -130,6 +132,10 @@ A plain code block without a language, with a line long enough to overflow horiz
 A relative image stored in the post's directory, published with a content hash:
 
 ![A gradient from ivory to navy](./gradient.png)
+
+The same image with a title, which can become a caption, and explicit dimensions:
+
+![A gradient from ivory to navy](./gradient.png "A gradient from the site's ivory to its navy"){width=960 height=540}
 
 ## Footnotes
 
