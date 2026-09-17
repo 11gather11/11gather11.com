@@ -7,9 +7,12 @@ import type {
 	OxContentCustomHostRoutesContext,
 } from '@ox-content/vite-plugin'
 
+import { rewriteCollectionAssetUrls } from '@ox-content/vite-plugin'
+
 import { loadPosts } from './blog/posts.ts'
+import { labelTaskListItems } from './blog/task-list.ts'
 import { SITE } from './config/site.ts'
-import { createRouteTable, type PageModule } from './ssg/route.ts'
+import { createRouteTable, type PageModule, type PageRoute } from './ssg/route.ts'
 
 // Eager so the build contains every page and nothing lists them by hand.
 const modules = import.meta.glob<PageModule>('/src/pages/**/index.tsx', { eager: true })
@@ -88,6 +91,39 @@ export function readHeadMetadata(html: string): { title?: string; description?: 
 	}
 }
 
+/** Route whose page is shown for unknown URLs, matching `not_found_handling` in wrangler.jsonc. */
+const NOT_FOUND_PATH = '/404.html'
+
+/**
+ * Renders one page of the route table into an Ox Content render result.
+ *
+ * @param page - Route from the table.
+ * @param renderContext - Ox Content's render context for the current request or build output.
+ * @returns HTML with head metadata, or text with a Content-Type, plus dev-server dependencies.
+ */
+async function renderPage(page: PageRoute, renderContext: OxContentCustomHostRenderContext) {
+	const dependencies: OxContentCustomHostDependency[] = []
+	const body = await page.render({
+		assets: {
+			stylesheets: stylesheetHrefs(renderContext),
+			// Syntax colours, written by Ox Content from the theme tokens in vite.config.ts.
+			syntaxStylesheet: renderContext.assets.themeTokens?.href,
+		},
+		async renderMarkdown(source, documentPath) {
+			const result = await renderContext.markdown.render({ source, documentPath })
+			dependencies.push(...result.dependencies)
+			const html = labelTaskListItems(result.html)
+			// Point relative image URLs at the hashed copies planned in vite.config.ts.
+			const manifest = await renderContext.assets.collectionManifest()
+			return manifest === undefined ? html : rewriteCollectionAssetUrls({ html, pagePath: page.path, manifest }).html
+		},
+	})
+	const isHtml = page.path.endsWith('/') || page.path.endsWith('.html')
+	return isHtml
+		? { html: body, ...readHeadMetadata(body), dependencies }
+		: { text: body, contentType: contentType(page.path), dependencies }
+}
+
 /**
  * Ox Content custom host: our page modules own every URL, layout and publication rule, while Ox
  * Content owns the Vite dev/build lifecycle, Markdown rendering, the feed, the sitemap and
@@ -103,26 +139,26 @@ const host = {
 			// Only directory paths are real pages; /404.html is served for every unknown URL and must
 			// stay out of the sitemap and llms.txt.
 			unlisted: !page.path.endsWith('/'),
-			async render(renderContext) {
-				const dependencies: OxContentCustomHostDependency[] = []
-				const body = await page.render({
-					assets: {
-						stylesheets: stylesheetHrefs(renderContext),
-						// Syntax colours, written by Ox Content from the theme tokens in vite.config.ts.
-						syntaxStylesheet: renderContext.assets.themeTokens?.href,
-					},
-					async renderMarkdown(source, documentPath) {
-						const result = await renderContext.markdown.render({ source, documentPath })
-						dependencies.push(...result.dependencies)
-						return result.html
-					},
-				})
-				const isHtml = page.path.endsWith('/') || page.path.endsWith('.html')
-				return isHtml
-					? { html: body, ...readHeadMetadata(body), dependencies }
-					: { text: body, contentType: contentType(page.path), dependencies }
-			},
+			render: (renderContext) => renderPage(page, renderContext),
 		}))
+	},
+
+	// Dev only: Cloudflare already answers unknown URLs with 404.html in production. Without this the
+	// dev server falls through to a bare "Cannot GET" page, so the 404 design could not be checked.
+	async notFound(context) {
+		// The host runs before Vite's own middleware, so this also sees requests for Vite's client, source
+		// modules and stylesheets. Only page navigations, which ask for HTML, get the 404 page; everything
+		// else falls through to Vite.
+		if (!(context.request.headers.get('accept') ?? '').includes('text/html')) {
+			return undefined
+		}
+		const table = await createRouteTable(modules, { includeDrafts: includeDrafts(context) })
+		const page = table.get(NOT_FOUND_PATH)
+		if (page === undefined) {
+			return undefined
+		}
+		const result = await renderPage(page, { ...context, route: { path: NOT_FOUND_PATH, render: () => undefined } })
+		return { ...result, status: 404 }
 	},
 
 	outputs(context) {

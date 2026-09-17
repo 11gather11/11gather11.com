@@ -1,7 +1,8 @@
-import { oxContentCustomHost } from '@ox-content/vite-plugin'
+import { oxContentCustomHost, planCollectionAssetsFromDocuments } from '@ox-content/vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
 import { configDefaults, defineConfig } from 'vite-plus'
 
+import { loadPosts } from './src/blog/posts.ts'
 import { syntaxTheme } from './src/config/syntax-theme.ts'
 
 const IGNORED_PATHS = ['dist/**', 'node_modules/**', '.direnv/**', '.wrangler/**']
@@ -32,8 +33,8 @@ export default defineConfig({
 				outDir: 'dist',
 				gfm: true,
 				highlight: true,
-				// Posts cannot inject scripts or inline styles through raw HTML.
-				sanitize: true,
+				// No sanitizer: every post is written in this repository, and the sanitizer's fixed
+				// attribute allow list drops things posts need, such as table column alignment.
 				docs: false,
 				search: false,
 				siteMaps: true,
@@ -56,6 +57,27 @@ export default defineConfig({
 			themeTokens: {
 				theme: syntaxTheme,
 				include: (name) => name.startsWith('syntax-'),
+			},
+			// Images referenced from posts with relative paths are published under /assets/content with a
+			// content hash, so the immutable cache rule in public/_headers applies to them.
+			collectionAssets: {
+				async manifest(context) {
+					const result = await planCollectionAssetsFromDocuments({
+						root: context.root,
+						contentRoot: 'src/content',
+						documents: loadPosts(context.mode === 'serve').map((post) => ({
+							documentPath: post.file,
+							pagePath: `/blog/${post.slug}/`,
+						})),
+					})
+					// A missing image fails the build instead of shipping a broken reference.
+					if (result.diagnostics.length > 0) {
+						throw new Error(result.diagnostics.map(({ message }) => message).join('\n'))
+					}
+					return result.manifest
+				},
+				watch: [{ path: 'src/content/blog', kind: 'directory' }],
+				ownedPrefixes: ['/assets/content'],
 			},
 			dev: {
 				feedOutputs: true,

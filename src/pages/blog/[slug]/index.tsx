@@ -27,7 +27,7 @@ export const routes: PageRoutes = ({ includeDrafts }) =>
 						</p>
 						<h1 className='mt-3 text-4xl font-bold tracking-tight sm:text-5xl'>{post.title}</h1>
 						<p className='mt-6 text-xl text-muted-foreground'>{post.description}</p>
-						{/* The HTML comes from the post's own Markdown, rendered and sanitized at build time by Ox Content. */}
+						{/* The HTML comes from the post's own Markdown in this repository, rendered at build time by Ox Content. */}
 						{/* oxlint-disable-next-line react/no-danger */}
 						<div
 							className='article-body mt-12'

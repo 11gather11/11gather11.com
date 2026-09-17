@@ -120,6 +120,20 @@
 			line-height: 1.4;
 		}
 
+		& h4,
+		& h5,
+		& h6 {
+			margin-top: 1.75em;
+			font-weight: 600;
+			line-height: 1.4;
+		}
+
+		& h5,
+		& h6 {
+			font-size: var(--text-base);
+			color: var(--color-muted-foreground);
+		}
+
 		& a {
 			text-decoration: underline;
 			text-underline-offset: 4px;
@@ -138,14 +152,51 @@
 			list-style-type: decimal;
 		}
 
-		& li + li {
+		& li + li,
+		& li > ul,
+		& li > ol {
 			margin-top: 0.4em;
+		}
+
+		/* GFM task lists: the checkbox replaces the bullet. */
+		& ul:has(> li > input[type='checkbox']) {
+			padding-left: 0;
+			list-style: none;
+		}
+
+		& li > input[type='checkbox'] {
+			margin-right: 0.5em;
+			accent-color: var(--color-foreground);
 		}
 
 		& blockquote {
 			border-left: 3px solid var(--color-border);
 			padding-left: 1em;
 			color: var(--color-muted-foreground);
+		}
+
+		/*
+		 * GitHub-style alerts (> [!NOTE] and friends), which Ox Content renders as .ox-callout. They stay
+		 * in the two brand colours: a surface and a bold label distinguish them from quotes, and the
+		 * label names the kind, so no per-kind colour has to be checked for contrast.
+		 */
+		& .ox-callout {
+			border-left: 3px solid var(--color-foreground);
+			border-radius: var(--radius-md);
+			background-color: var(--color-code-surface);
+			padding: 0.75em 1em;
+			color: var(--color-foreground);
+
+			& > * + * {
+				margin-top: 0.5em;
+			}
+		}
+
+		& .ox-callout-title {
+			font-size: var(--text-sm);
+			font-weight: 700;
+			letter-spacing: var(--tracking-wide);
+			text-transform: uppercase;
 		}
 
 		& :not(pre) > code {
@@ -176,7 +227,12 @@
 		& td {
 			border: 1px solid var(--color-border);
 			padding: 0.4em 0.8em;
-			text-align: left;
+		}
+
+		/* Columns without an alignment in the Markdown start-align; aligned ones keep their align attribute. */
+		& th:not([align]),
+		& td:not([align]) {
+			text-align: start;
 		}
 
 		& hr {
@@ -184,8 +240,52 @@
 		}
 
 		& img {
+			display: block;
 			max-width: 100%;
 			height: auto;
+			border-radius: var(--radius-md);
+		}
+
+		& kbd {
+			border: 1px solid var(--color-border);
+			border-bottom-width: 2px;
+			border-radius: var(--radius-sm);
+			background-color: var(--color-code-surface);
+			padding: 0.05em 0.4em;
+			font-family: var(--font-mono);
+			font-size: 0.85em;
+		}
+
+		& details > summary {
+			cursor: pointer;
+			font-weight: 600;
+		}
+
+		& sup > a {
+			text-decoration: none;
+		}
+
+		/* Footnotes: smaller muted text with the back link beside the note instead of below it. */
+		& .footnote {
+			display: flex;
+			gap: 0.5em;
+			align-items: baseline;
+			font-size: var(--text-sm);
+			color: var(--color-muted-foreground);
+
+			& > p {
+				margin: 0;
+			}
+		}
+
+		& :not(.footnote) + .footnote {
+			margin-top: 2.5em;
+			border-top: 1px solid var(--color-border);
+			padding-top: 1em;
+		}
+
+		& .footnote + .footnote {
+			margin-top: 0.5em;
 		}
 	}
 }
