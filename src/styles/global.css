@@ -87,8 +87,25 @@
 	--color-band-foreground: var(--band-foreground);
 	--color-band-muted-foreground: var(--band-muted-foreground);
 	--color-code-surface: var(--code-surface);
-	--font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
-	--font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+	/*
+	 * Latin text uses the self-hosted Geist faces. Japanese uses fonts the operating system already
+	 * ships, named explicitly so every platform gets a clean gothic instead of its generic default:
+	 * Hiragino on Apple devices, BIZ UDGothic (full-width punctuation, unlike BIZ UDPGothic) or Meiryo
+	 * on Windows, Noto Sans CJK JP on Android and Linux. A self-hosted Japanese web font was measured
+	 * and rejected: M PLUS 1p added about 62 KB of gzipped @font-face rules to the render-blocking
+	 * stylesheet of every page, plus 300 KB to 1 MB of font files per Japanese post.
+	 */
+	--font-sans:
+		'Geist Variable', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'BIZ UDGothic', Meiryo, 'Noto Sans CJK JP',
+		'Noto Sans JP', sans-serif;
+	--font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, 'BIZ UDGothic', monospace;
+}
+
+@layer base {
+	body {
+		/* Adds a small gap between Japanese and Latin letters, as in 「Geist を使う」; ignored where unsupported. */
+		text-autospace: normal;
+	}
 }
 
 /*
