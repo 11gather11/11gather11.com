@@ -159,13 +159,9 @@ A YouTube video, as a privacy-enhanced iframe that loads lazily:
 
 <YouTube id="Ny8pjacNIv8" title="An Evening with Ron Carter at Emmet’s Place" />
 
-A Twitch channel, as a static card with its profile image:
+A Twitch channel, as a static card:
 
-<Twitch url="https://www.twitch.tv/igara4ryusei" title="igara4ryusei" channel="igara4ryusei" image="https://static-cdn.jtvnw.net/jtv_user_pictures/c5e2a382-8dd1-4c3c-9ef0-1b6422cc0aca-profile_image-300x300.png" />
-
-The same channel with view and status metrics:
-
-<Twitch url="https://www.twitch.tv/igara4ryusei" title="igara4ryusei" channel="igara4ryusei" status="Offline" views="1.2K" image="https://static-cdn.jtvnw.net/jtv_user_pictures/c5e2a382-8dd1-4c3c-9ef0-1b6422cc0aca-profile_image-300x300.png" />
+<Twitch url="https://www.twitch.tv/igara4ryusei" title="igara4ryusei" channel="igara4ryusei" />
 
 Articles on Zenn and Qiita, fetched at build time:
 
