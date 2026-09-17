@@ -5,11 +5,11 @@ import { renderHtml } from '../../ssg/html.ts'
 import type { PageRoutes } from '../../ssg/route.ts'
 
 /** Blog index: every published post, newest first. */
-export const routes: PageRoutes = () => [
+export const routes: PageRoutes = ({ includeDrafts }) => [
 	{
 		path: '/blog/',
 		render: async ({ assets }) => {
-			const posts = await loadPosts()
+			const posts = loadPosts(includeDrafts)
 			return renderHtml(
 				<SiteLayout title='Blog' description={`Posts by ${SITE.name}.`} pathname='/blog/' assets={assets}>
 					<h1 className='text-4xl font-bold tracking-tight sm:text-6xl'>Blog</h1>

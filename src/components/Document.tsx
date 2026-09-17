@@ -15,6 +15,8 @@ export type DocumentProps = {
 	ogType?: 'website' | 'article'
 	/** Publication date of an article, `YYYY-MM-DD`. */
 	publishedTime?: string
+	/** Link the syntax colour stylesheet, for pages that render highlighted code. */
+	highlightsCode?: boolean
 	assets: SiteAssets
 	children: ReactNode
 }
@@ -38,6 +40,7 @@ export function Document({
 	lang = SITE.defaultLang,
 	ogType = 'website',
 	publishedTime,
+	highlightsCode = false,
 	assets,
 	children,
 }: DocumentProps) {
@@ -57,7 +60,7 @@ export function Document({
 				<link rel='icon' href='/icon.svg' type='image/svg+xml' />
 				<link rel='apple-touch-icon' href='/apple-touch-icon.png' />
 				{url !== undefined && <link rel='canonical' href={url} />}
-				<link rel='alternate' type='application/rss+xml' title={`Blog | ${SITE.name}`} href='/blog/rss.xml' />
+				<link rel='alternate' type='application/rss+xml' title={`Blog | ${SITE.name}`} href='/blog/feed.xml' />
 
 				<meta property='og:site_name' content={SITE.name} />
 				<meta property='og:title' content={fullTitle} />
@@ -74,6 +77,9 @@ export function Document({
 				{assets.stylesheets.map((href) => (
 					<link key={href} rel='stylesheet' href={href} />
 				))}
+				{highlightsCode && assets.syntaxStylesheet !== undefined && (
+					<link rel='stylesheet' href={assets.syntaxStylesheet} />
+				)}
 			</head>
 			<body className='bg-background font-sans leading-7 text-foreground antialiased'>{children}</body>
 		</html>

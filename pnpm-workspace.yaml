@@ -19,7 +19,10 @@ peerDependencyRules:
 minimumReleaseAge: 1440
 # Dependency lifecycle scripts run only for packages listed in allowBuilds.
 strictDepBuilds: true
-allowBuilds: {}
+allowBuilds:
+  # Pulled in by @ox-content/vite-plugin for browser rendering this site does not use; its
+  # postinstall downloads a Chrome build.
+  puppeteer: false
 # Reject dependencies from git repositories or tarball URLs.
 blockExoticSubdeps: true
 # Reject a version whose publisher trust is weaker than an earlier version's.

@@ -6,17 +6,28 @@ type MaybePromise<T> = T | Promise<T>
 export type SiteAssets = {
 	/** Stylesheet URLs to link from every HTML page, in order. */
 	stylesheets: readonly string[]
-}
-
-/** What the dev server or the build supplies for rendering, before routes are collected. */
-export type SiteContext = {
-	assets: SiteAssets
+	/** Syntax colour stylesheet, linked only by pages that render highlighted code. */
+	syntaxStylesheet?: string
 }
 
 /** What a route receives when it renders. */
-export type RenderContext = SiteContext & {
-	/** Every route path of the site, sorted, so pages such as the sitemap can list the others. */
-	paths: readonly string[]
+export type RenderContext = {
+	assets: SiteAssets
+	/**
+	 * Renders Markdown through the Ox Content pipeline configured in vite.config.ts.
+	 *
+	 * @param source - Markdown body without frontmatter.
+	 * @param documentPath - Project-relative path of the source file, used for relative links and
+	 *   dev-server invalidation.
+	 * @returns HTML.
+	 */
+	renderMarkdown: (source: string, documentPath: string) => Promise<string>
+}
+
+/** What a page module receives when it lists its routes. */
+export type RoutesContext = {
+	/** True in the dev server, where drafts are previewed; false in the build, which must omit them. */
+	includeDrafts: boolean
 }
 
 /** One public URL and how to produce its body. */
@@ -32,7 +43,7 @@ export type PageRoute = {
  * A function rather than an array so modules that derive URLs from content (such as one URL per
  * article) can load that content first.
  */
-export type PageRoutes = () => MaybePromise<readonly PageRoute[]>
+export type PageRoutes = (context: RoutesContext) => MaybePromise<readonly PageRoute[]>
 
 /** The shape `src/pages/**\/index.tsx` modules export. */
 export type PageModule = {
@@ -46,18 +57,22 @@ export type RouteTable = ReadonlyMap<string, PageRoute>
  * Collects the routes of all page modules into one table.
  *
  * @param modules - Page modules keyed by their source path, as `import.meta.glob` returns them.
+ * @param context - Passed to every module's `routes`.
  * @returns Routes keyed by URL path.
  * @throws If a path is malformed or two routes claim the same path, since one would silently
  *   overwrite the other's output file.
  * @example
- * const table = await createRouteTable(import.meta.glob('/src/pages/**\/index.tsx', { eager: true }))
+ * const table = await createRouteTable(import.meta.glob('/src/pages/**\/index.tsx', { eager: true }), { includeDrafts: false })
  */
-export async function createRouteTable(modules: Record<string, PageModule>): Promise<RouteTable> {
+export async function createRouteTable(
+	modules: Record<string, PageModule>,
+	context: RoutesContext
+): Promise<RouteTable> {
 	const table = new Map<string, PageRoute>()
 	// Remember which module added each path so a clash names both sides.
 	const owners = new Map<string, string>()
 	for (const [source, module] of Object.entries(modules)) {
-		for (const route of await module.routes()) {
+		for (const route of await module.routes(context)) {
 			// Validate the path shape here, not only at write time, so dev fails as early as build.
 			outputFileName(route.path)
 			const owner = owners.get(route.path)
@@ -75,29 +90,36 @@ if (import.meta.vitest) {
 	const { describe, expect, test } = import.meta.vitest
 
 	const route = (path: string): PageRoute => ({ path, render: () => path })
+	const context: RoutesContext = { includeDrafts: false }
 
 	describe('createRouteTable', () => {
 		test('merges routes from every module', async () => {
-			const table = await createRouteTable({
-				'/src/pages/index.tsx': { routes: () => [route('/')] },
-				'/src/pages/blog/index.tsx': { routes: async () => [route('/blog/'), route('/blog/rss.xml')] },
-			})
+			const table = await createRouteTable(
+				{
+					'/src/pages/index.tsx': { routes: () => [route('/')] },
+					'/src/pages/blog/index.tsx': { routes: async () => [route('/blog/'), route('/blog/rss.xml')] },
+				},
+				context
+			)
 			expect([...table.keys()]).toEqual(['/', '/blog/', '/blog/rss.xml'])
 		})
 
 		test('rejects two modules claiming one path', async () => {
 			await expect(
-				createRouteTable({
-					'/src/pages/a/index.tsx': { routes: () => [route('/same/')] },
-					'/src/pages/b/index.tsx': { routes: () => [route('/same/')] },
-				})
+				createRouteTable(
+					{
+						'/src/pages/a/index.tsx': { routes: () => [route('/same/')] },
+						'/src/pages/b/index.tsx': { routes: () => [route('/same/')] },
+					},
+					context
+				)
 			).rejects.toThrow('/same/ is defined by both /src/pages/a/index.tsx and /src/pages/b/index.tsx')
 		})
 
 		test('rejects a malformed path', async () => {
-			await expect(createRouteTable({ '/src/pages/index.tsx': { routes: () => [route('/about')] } })).rejects.toThrow(
-				'must end with "/" or a file extension'
-			)
+			await expect(
+				createRouteTable({ '/src/pages/index.tsx': { routes: () => [route('/about')] } }, context)
+			).rejects.toThrow('must end with "/" or a file extension')
 		})
 	})
 }

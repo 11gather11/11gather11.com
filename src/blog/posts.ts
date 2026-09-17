@@ -1,34 +1,45 @@
-import { renderMarkdown } from './markdown.ts'
+import { readdirSync, readFileSync } from 'node:fs'
+import path from 'node:path'
+
 import { listPosts, parsePost, readingTime, type PostSource } from './post.ts'
 
-/** A post ready to render. */
+/** A post's metadata, ready to list or to render through the Markdown pipeline. */
 export type Post = PostSource & {
-	/** Article body as HTML. */
-	html: string
+	/** Project-relative path of the source file, for the Markdown renderer. */
+	file: string
 	/** Estimated reading time in minutes. */
 	minutes: number
 }
 
-// Raw strings rather than a Markdown plugin: the pipeline lives in markdown.ts, and Vite still tracks
-// these files, so editing a post reloads the dev server page.
-const sources = import.meta.glob<string>('/src/content/blog/*.md', { query: '?raw', import: 'default', eager: true })
+// Read from disk rather than imported: Ox Content's Vite plugin transforms every Markdown import
+// under its srcDir, even with `?raw`, which strips the frontmatter this module validates. The dev
+// server still reloads on edits through the host's `routeDependencies` on this directory.
+const POSTS_DIR = 'src/content/blog'
 
 /**
  * Loads every post that should be published, newest first.
  *
- * Drafts are included in the dev server (`import.meta.env.DEV`) so they can be previewed, and left
- * out of the build, so they never reach the index, the feed, the sitemap or a URL.
+ * Whether drafts are included comes from the caller rather than `import.meta.env.DEV`: Ox Content's
+ * build loads this module through a Vite server, where `DEV` would wrongly be true.
  *
- * @returns Rendered posts.
+ * @param includeDrafts - True in the dev server, false in the build.
+ * @returns Posts without rendered HTML; pages render the body when they need it.
  * @throws If any post has invalid frontmatter, which fails the build.
  */
-export async function loadPosts(): Promise<Post[]> {
-	const parsed = Object.entries(sources).map(([file, source]) => parsePost(file.slice(1), source))
-	return Promise.all(
-		listPosts(parsed, import.meta.env.DEV).map(async (post) => ({
-			...post,
-			html: await renderMarkdown(post.body),
-			minutes: readingTime(post.body, post.lang),
-		}))
-	)
+export function loadPosts(includeDrafts: boolean): Post[] {
+	let names: string[]
+	try {
+		names = readdirSync(POSTS_DIR).filter((name) => name.endsWith('.md'))
+	} catch (error) {
+		// No posts directory yet simply means no posts.
+		if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+			return []
+		}
+		throw error
+	}
+	const parsed = names.map((name) => {
+		const file = path.posix.join(POSTS_DIR, name)
+		return { ...parsePost(file, readFileSync(file, 'utf8')), file }
+	})
+	return listPosts(parsed, includeDrafts).map((post) => ({ ...post, minutes: readingTime(post.body, post.lang) }))
 }

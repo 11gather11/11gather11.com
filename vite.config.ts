@@ -1,18 +1,71 @@
+import { oxContentCustomHost } from '@ox-content/vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
 import { configDefaults, defineConfig } from 'vite-plus'
 
-import { ssg } from './src/ssg/plugin.ts'
+import { syntaxTheme } from './src/config/syntax-theme.ts'
 
 const IGNORED_PATHS = ['dist/**', 'node_modules/**', '.direnv/**', '.wrangler/**']
 
 export default defineConfig({
-	appType: 'mpa',
+	// Ox Content's custom host serves and writes every page, so Vite adds no HTML fallback of its own.
+	appType: 'custom',
 	server: {
 		watch: {
 			ignored: ['**/.direnv/**'],
 		},
 	},
-	plugins: [tailwindcss(), ssg()],
+	build: {
+		outDir: 'dist',
+		emptyOutDir: true,
+		// The host looks up the stylesheet's hashed URL in the manifest.
+		manifest: true,
+		rollupOptions: { input: 'src/styles/global.css' },
+	},
+	plugins: [
+		tailwindcss(),
+		oxContentCustomHost({
+			host: './src/host.ts',
+			// Pages are finished documents; Vite's HTML transform would inject its dev client script.
+			build: { transformHtml: false },
+			oxContent: {
+				srcDir: 'src/content',
+				outDir: 'dist',
+				gfm: true,
+				highlight: true,
+				// Posts cannot inject scripts or inline styles through raw HTML.
+				sanitize: true,
+				docs: false,
+				search: false,
+				siteMaps: true,
+				feeds: {
+					blog: {
+						collection: 'blog',
+						formats: ['rss'],
+						path: '/blog/',
+						title: 'Blog | 11gather11',
+						description: 'Posts by 11gather11.',
+						language: 'en',
+					},
+				},
+				ssg: {
+					siteName: '11gather11',
+					siteUrl: 'https://11gather11.com',
+				},
+			},
+			// Only the syntax colours: the rest of the site's palette lives in src/styles/global.css.
+			themeTokens: {
+				theme: syntaxTheme,
+				include: (name) => name.startsWith('syntax-'),
+			},
+			dev: {
+				feedOutputs: true,
+				routeDependencies: [
+					{ path: 'src/pages', kind: 'directory' },
+					{ path: 'src/content/blog', kind: 'directory' },
+				],
+			},
+		}),
+	],
 	// In-source tests are guarded by `import.meta.vitest`; defining it away lets the build drop them.
 	define: {
 		'import.meta.vitest': 'undefined',

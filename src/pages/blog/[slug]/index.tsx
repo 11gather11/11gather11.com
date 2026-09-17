@@ -7,10 +7,10 @@ import type { PageRoutes } from '../../../ssg/route.ts'
  * One page per published post at `/blog/<slug>/`. The `[slug]` directory name only documents the
  * dynamic segment; the URLs come from the posts in src/content/blog.
  */
-export const routes: PageRoutes = async () =>
-	(await loadPosts()).map((post) => ({
+export const routes: PageRoutes = ({ includeDrafts }) =>
+	loadPosts(includeDrafts).map((post) => ({
 		path: `/blog/${post.slug}/`,
-		render: ({ assets }) =>
+		render: async ({ assets, renderMarkdown }) =>
 			renderHtml(
 				<SiteLayout
 					title={post.title}
@@ -18,6 +18,7 @@ export const routes: PageRoutes = async () =>
 					pathname={`/blog/${post.slug}/`}
 					ogType='article'
 					publishedTime={post.date}
+					highlightsCode
 					assets={assets}
 				>
 					<article lang={post.lang}>
@@ -26,9 +27,12 @@ export const routes: PageRoutes = async () =>
 						</p>
 						<h1 className='mt-3 text-4xl font-bold tracking-tight sm:text-5xl'>{post.title}</h1>
 						<p className='mt-6 text-xl text-muted-foreground'>{post.description}</p>
-						{/* The HTML comes from the post's own Markdown, rendered at build time with raw HTML dropped. */}
+						{/* The HTML comes from the post's own Markdown, rendered and sanitized at build time by Ox Content. */}
 						{/* oxlint-disable-next-line react/no-danger */}
-						<div className='article-body mt-12' dangerouslySetInnerHTML={{ __html: post.html }} />
+						<div
+							className='article-body mt-12'
+							dangerouslySetInnerHTML={{ __html: await renderMarkdown(post.body, post.file) }}
+						/>
 					</article>
 				</SiteLayout>
 			),
