@@ -1,61 +1,56 @@
-import { readdirSync, readFileSync, type Dirent } from 'node:fs'
+import type { OxContentCustomHostBaseContext } from '@ox-content/vite-plugin'
+
+import { buildCollectionManifest, classifyPublishState } from '@ox-content/vite-plugin'
 import path from 'node:path'
 
-import { listPosts, parsePost, readingTime, type PostSource } from './post.ts'
+import { postFromEntry, readingTime, sortPosts, type PostSource } from './post.ts'
 
 /** A post's metadata, ready to list or to render through the Markdown pipeline. */
 export type Post = PostSource & {
-	/** Project-relative path of the source file, for the Markdown renderer. */
+	/** Project-relative path of the source file, for the Markdown renderer and sitemap dates. */
 	file: string
 	/** Estimated reading time in minutes. */
 	minutes: number
+	/** False for `unlisted` posts: the page is built but left out of the index, feed and sitemap. */
+	listed: boolean
 }
 
-// Read from disk rather than imported: Ox Content's Vite plugin transforms every Markdown import
-// under its srcDir, even with `?raw`, which strips the frontmatter this module validates. The dev
-// server still reloads on edits through the host's `routeDependencies` on this directory.
-const POSTS_DIR = 'src/content/blog'
-
 /**
- * Loads every post that should be published, newest first.
+ * Loads the posts that get a page in this run, newest first.
  *
- * Whether drafts are included comes from the caller rather than `import.meta.env.DEV`: Ox Content's
- * build loads this module through a Vite server, where `DEV` would wrongly be true.
+ * Posts come from the `blog` collection in vite.config.ts, whose validate hook has already checked
+ * their frontmatter. Which ones are built is Ox Content's publish state: drafts, posts dated or
+ * scheduled in the future and expired posts are left out of the build, and `unlisted` posts are
+ * built but not listed. The dev server previews them all.
  *
- * @param includeDrafts - True in the dev server, false in the build.
+ * The manifest is built directly rather than imported from `virtual:ox-content/collections`, so the
+ * same function works in vite.config.ts, where virtual modules do not exist.
+ *
+ * @param context - Any custom-host context: its mode, root and resolved Ox Content options.
  * @returns Posts without rendered HTML; pages render the body when they need it.
- * @throws If any post has invalid frontmatter, which fails the build.
+ * @throws If a post fails validation, which fails the build.
  */
-export function loadPosts(includeDrafts: boolean): Post[] {
-	let entries: Dirent[]
-	try {
-		entries = readdirSync(POSTS_DIR, { withFileTypes: true })
-	} catch (error) {
-		// No posts directory yet simply means no posts.
-		if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+export async function loadPosts(
+	context: Pick<OxContentCustomHostBaseContext, 'mode' | 'root' | 'options'>
+): Promise<Post[]> {
+	const manifest = await buildCollectionManifest(context.root, context.options)
+	const contentDir = path.relative(context.root, path.resolve(context.root, context.options.srcDir))
+	// Undefined options turn filtering off, so the dev server keeps every post visible.
+	const publishState = context.mode === 'serve' ? undefined : context.options.publishState
+	const posts = (manifest.collections.blog ?? []).flatMap((entry): Post[] => {
+		const decision = classifyPublishState(entry.frontmatter, publishState)
+		if (!decision.output) {
 			return []
 		}
-		throw error
-	}
-	const parsed = entries
-		// Dotfiles such as .DS_Store are editor and OS noise, not posts.
-		.filter((entry) => !entry.name.startsWith('.'))
-		.map((entry) => {
-			// A loose file here is almost certainly a post in the old <slug>.md layout; fail loudly rather
-			// than silently leaving it unpublished.
-			const file = entry.isDirectory()
-				? path.posix.join(POSTS_DIR, entry.name, 'index.md')
-				: path.posix.join(POSTS_DIR, entry.name)
-			let source: string
-			try {
-				source = readFileSync(file, 'utf8')
-			} catch (error) {
-				if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-					throw new Error(`Invalid post ${file}: every directory in ${POSTS_DIR} needs an index.md`)
-				}
-				throw error
-			}
-			return { ...parsePost(file, source), file }
-		})
-	return listPosts(parsed, includeDrafts).map((post) => ({ ...post, minutes: readingTime(post.body, post.lang) }))
+		const post = postFromEntry(entry)
+		return [
+			{
+				...post,
+				file: path.posix.join(contentDir.split(path.sep).join('/'), entry.source),
+				minutes: readingTime(post.body),
+				listed: decision.listed,
+			},
+		]
+	})
+	return sortPosts(posts)
 }

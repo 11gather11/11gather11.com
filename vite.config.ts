@@ -1,7 +1,8 @@
-import { oxContentCustomHost, planCollectionAssetsFromDocuments } from '@ox-content/vite-plugin'
+import { defineCollections, oxContentCustomHost, planCollectionAssetsFromDocuments } from '@ox-content/vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
 import { configDefaults, defineConfig } from 'vite-plus'
 
+import { validatePost } from './src/blog/post.ts'
 import { loadPosts } from './src/blog/posts.ts'
 import { syntaxTheme } from './src/config/syntax-theme.ts'
 
@@ -54,6 +55,16 @@ export default defineConfig({
 				docs: false,
 				search: false,
 				siteMaps: true,
+				// Posts are read as a collection: Ox Content parses the frontmatter and runs validatePost over
+				// every post, failing the build once with all problems. `blog/**` rather than
+				// `blog/*/index.md`, so a Markdown file in the wrong place fails validation instead of being
+				// silently ignored.
+				collections: defineCollections({
+					blog: { source: 'blog/**/*.md', include: ['body'], validate: validatePost },
+				}),
+				// Drafts, future-dated or scheduled posts and expired posts are not built, and unlisted posts
+				// are built but not listed; src/blog/posts.ts applies it. The dev server previews them all.
+				publishState: true,
 				// Embed tags in posts become static cards at build time: no third-party widget script or iframe
 				// reaches the page.
 				embeds: {
@@ -110,7 +121,7 @@ export default defineConfig({
 					const result = await planCollectionAssetsFromDocuments({
 						root: context.root,
 						contentRoot: 'src/content',
-						documents: loadPosts(context.mode === 'serve').map((post) => ({
+						documents: (await loadPosts(context)).map((post) => ({
 							documentPath: post.file,
 							pagePath: `/blog/${post.slug}/`,
 						})),

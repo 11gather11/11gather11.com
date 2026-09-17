@@ -1,23 +1,22 @@
-import { loadPosts } from '../../blog/posts.ts'
 import { SiteLayout } from '../../components/SiteLayout.tsx'
 import { SITE } from '../../config/site.ts'
 import { renderHtml } from '../../ssg/html.ts'
 import type { PageRoutes } from '../../ssg/route.ts'
 
 /** Blog index: every published post, newest first. */
-export const routes: PageRoutes = ({ includeDrafts }) => [
+export const routes: PageRoutes = ({ posts }) => [
 	{
 		path: '/blog/',
-		render: async ({ assets }) => {
-			const posts = loadPosts(includeDrafts)
+		render: ({ assets }) => {
+			const listed = posts.filter((post) => post.listed)
 			return renderHtml(
 				<SiteLayout title='Blog' description={`Posts by ${SITE.name}.`} pathname='/blog/' assets={assets}>
 					<h1 className='text-4xl font-bold tracking-tight sm:text-6xl'>Blog</h1>
-					{posts.length === 0 ? (
+					{listed.length === 0 ? (
 						<p className='mt-4 text-lg text-muted-foreground'>No posts yet.</p>
 					) : (
 						<ul className='mt-12'>
-							{posts.map((post) => (
+							{listed.map((post) => (
 								<li
 									key={post.slug}
 									lang={post.lang}

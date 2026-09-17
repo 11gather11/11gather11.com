@@ -1,3 +1,5 @@
+import type { Post } from '../blog/posts.ts'
+
 import { outputFileName } from './output.ts'
 
 type MaybePromise<T> = T | Promise<T>
@@ -30,8 +32,11 @@ export type RenderContext = {
 
 /** What a page module receives when it lists its routes. */
 export type RoutesContext = {
-	/** True in the dev server, where drafts are previewed; false in the build, which must omit them. */
-	includeDrafts: boolean
+	/**
+	 * Posts that get a page in this run, newest first: every post in the dev server, only published
+	 * ones in the build. Loaded once by the host so page modules share one copy.
+	 */
+	posts: readonly Post[]
 }
 
 /** One public URL and how to produce its body. */
@@ -43,6 +48,8 @@ export type PageRoute = {
 	 * Defaults to the page module; routes built from content, such as posts, point at that content.
 	 */
 	inputPath?: string
+	/** Keeps the page out of the sitemap, feeds and llms.txt while still building it. */
+	unlisted?: boolean
 	/** Text for HTML and XML routes; bytes for binary files such as generated images. */
 	render: (context: RenderContext) => MaybePromise<string | Uint8Array>
 }
@@ -72,7 +79,7 @@ export type RouteTable = ReadonlyMap<string, PageRoute>
  * @throws If a path is malformed or two routes claim the same path, since one would silently
  *   overwrite the other's output file.
  * @example
- * const table = await createRouteTable(import.meta.glob('/src/pages/**\/index.tsx', { eager: true }), { includeDrafts: false })
+ * const table = await createRouteTable(import.meta.glob('/src/pages/**\/index.tsx', { eager: true }), { posts: [] })
  */
 export async function createRouteTable(
 	modules: Record<string, PageModule>,
@@ -101,7 +108,7 @@ if (import.meta.vitest) {
 	const { describe, expect, test } = import.meta.vitest
 
 	const route = (path: string): PageRoute => ({ path, render: () => path })
-	const context: RoutesContext = { includeDrafts: false }
+	const context: RoutesContext = { posts: [] }
 
 	describe('createRouteTable', () => {
 		test('merges routes from every module', async () => {

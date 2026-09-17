@@ -1,5 +1,4 @@
 import { hasEmbeds } from '../../../blog/embeds.ts'
-import { loadPosts } from '../../../blog/posts.ts'
 import { renderOgImage } from '../../../og/render.ts'
 import { postDateTime } from '../../../seo/date-time.ts'
 import { blogPostingStructuredData } from '../../../seo/structured-data.ts'
@@ -12,15 +11,17 @@ import type { PageRoutes } from '../../../ssg/route.ts'
  * The `[slug]` directory name only documents the dynamic segment; the URLs come from the posts in
  * src/content/blog.
  */
-export const routes: PageRoutes = ({ includeDrafts }) =>
-	loadPosts(includeDrafts).flatMap((post) => [
+export const routes: PageRoutes = ({ posts }) =>
+	posts.flatMap((post) => [
 		{
 			path: `/og/blog/${post.slug}.png`,
+			unlisted: !post.listed,
 			render: ({ root }) => renderOgImage(root, { title: post.title, description: post.description, date: post.date }),
 		},
 		{
 			path: `/blog/${post.slug}/`,
 			inputPath: post.file,
+			unlisted: !post.listed,
 			render: async ({ assets, renderMarkdown }) => {
 				const html = await renderMarkdown(post.body, post.file)
 				return renderHtml(

@@ -1,21 +1,21 @@
-import { parse as parseYaml } from 'yaml'
+import type { CollectionEntry, CollectionValidationResult } from '@ox-content/vite-plugin'
+
+import { readingTimeMinutes } from '@ox-content/vite-plugin'
 
 /** Validated frontmatter of a blog post. */
 export type PostFrontmatter = {
 	title: string
 	/** One-sentence summary, shown on the index, as the lead paragraph and in metadata. */
 	description: string
-	/** Publication date, `YYYY-MM-DD`. */
+	/** Publication date, `YYYY-MM-DD`. Ox Content's publish state also holds a post back until this day. */
 	date: string
 	/** Date of the last meaningful update, `YYYY-MM-DD`. */
 	updated?: string
 	/** BCP 47 language of the post; the interface stays English either way. */
 	lang: string
-	/** Drafts render in the dev server only. */
-	draft: boolean
 }
 
-/** A post's source split into metadata and Markdown body. */
+/** A post's metadata and Markdown body, read from the blog collection. */
 export type PostSource = PostFrontmatter & {
 	/** URL segment, taken from the name of the post's directory. */
 	slug: string
@@ -23,207 +23,191 @@ export type PostSource = PostFrontmatter & {
 	body: string
 }
 
-// Frontmatter is a YAML block fenced by `---` lines at the very start of the file.
-const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/
+// Collection sources are relative to srcDir: blog/<slug>/index.md.
+const POST_SOURCE = /^blog\/([^/]+)\/index\.md$/
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 // Lower-case words joined by single hyphens keep URLs readable and free of escaping.
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 /**
- * Parses and validates a post file.
+ * Checks one document of the blog collection, as its `validate` hook in vite.config.ts.
  *
- * Validation fails loudly at build time rather than rendering a page with a missing title or an
- * `Invalid Date`, and names the file and field so the fix is obvious.
+ * Ox Content collects every problem across all posts and fails the build once, naming each file, so
+ * a post never renders with a missing title or an `Invalid Date`. Publish-state fields (`draft`,
+ * `unlisted`, `scheduled`, `expiry`) are Ox Content's and are not checked here.
  *
- * @param file - Path of the post's `index.md`; its directory name is the slug, and the path is used in
- *   error messages.
- * @param source - Raw file contents.
- * @returns The post's metadata and Markdown body.
- * @throws If the frontmatter is missing, a required field is absent, or a value has the wrong shape.
+ * @param document - The parsed document: its source path relative to srcDir and its frontmatter.
+ * @returns Problems found, or nothing when the post is valid.
  * @example
- * parsePost('src/content/blog/hello-world/index.md', '---\ntitle: Hello\n...')
+ * validatePost({ source: 'blog/hello/index.md', frontmatter: { title: 'Hello' } })
+ * // ['"description" must be a non-empty string', '"date" is required']
  */
-export function parsePost(file: string, source: string): PostSource {
-	const fail = (message: string): never => {
-		throw new Error(`Invalid post ${file}: ${message}`)
+export function validatePost(document: {
+	source: string
+	frontmatter: Record<string, unknown>
+}): CollectionValidationResult {
+	// Posts live in <slug>/index.md so images sit next to the Markdown that uses them. A loose
+	// blog/<slug>.md is most likely a post in the wrong layout, so it fails instead of vanishing.
+	const slug = POST_SOURCE.exec(document.source)?.[1]
+	if (slug === undefined) {
+		return 'posts must be written as blog/<slug>/index.md'
 	}
-
-	// Posts live in <slug>/index.md so images and other files sit next to the Markdown that uses them.
-	const segments = file.split('/')
-	if (segments.at(-1) !== 'index.md' || segments.length < 2) {
-		fail('posts must be written as <slug>/index.md')
-	}
-	const slug = segments.at(-2) ?? ''
+	const problems: string[] = []
 	if (!SLUG.test(slug)) {
-		fail(`directory name "${slug}" must be lower-case words joined by hyphens`)
+		problems.push(`directory name "${slug}" must be lower-case words joined by hyphens`)
 	}
-
-	const match = FRONTMATTER.exec(source)
-	if (match === null) {
-		return fail('missing the --- frontmatter block')
-	}
-	const data: unknown = parseYaml(match[1] ?? '')
-	if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-		return fail('frontmatter must be a mapping')
-	}
-	const fields = data as Record<string, unknown>
-
-	const requiredString = (name: string): string => {
+	const fields = document.frontmatter
+	for (const name of ['title', 'description']) {
 		const value = fields[name]
 		if (typeof value !== 'string' || value.trim() === '') {
-			fail(`"${name}" must be a non-empty string`)
+			problems.push(`"${name}" must be a non-empty string`)
 		}
-		return (value as string).trim()
 	}
-	const optionalDate = (name: string): string | undefined => {
+	if (fields.date === undefined) {
+		problems.push('"date" is required')
+	}
+	for (const name of ['date', 'updated']) {
 		const value = fields[name]
-		if (value === undefined) {
-			return undefined
+		// Anything other than a YYYY-MM-DD string means a typo such as 2026-9-1.
+		if (value !== undefined && (typeof value !== 'string' || !DATE.test(value) || Number.isNaN(Date.parse(value)))) {
+			problems.push(`"${name}" must be a date written as YYYY-MM-DD`)
 		}
-		// YAML 1.2 keeps unquoted dates as strings; anything else means a typo such as 2026-9-1.
-		if (typeof value !== 'string' || !DATE.test(value) || Number.isNaN(Date.parse(value))) {
-			fail(`"${name}" must be a date written as YYYY-MM-DD`)
-		}
-		return value as string
 	}
+	if (fields.lang !== undefined && (typeof fields.lang !== 'string' || fields.lang.trim() === '')) {
+		problems.push('"lang" must be a non-empty string such as en or ja')
+	}
+	// Ox Content only treats JSON true as a draft, so `draft: yes` would silently publish.
+	if (fields.draft !== undefined && typeof fields.draft !== 'boolean') {
+		problems.push('"draft" must be true or false')
+	}
+	return problems.length === 0 ? undefined : problems
+}
 
-	const lang = fields.lang ?? 'en'
-	if (typeof lang !== 'string' || lang.trim() === '') {
-		fail('"lang" must be a non-empty string such as en or ja')
+/**
+ * Reads a validated blog collection entry as a post.
+ *
+ * @param entry - Entry from the blog collection, built with `include: ['body']`.
+ * @returns The post's metadata and body.
+ * @throws If the entry has no body, which means the collection lost its `include` option.
+ */
+export function postFromEntry(entry: CollectionEntry): PostSource {
+	if (entry.body === undefined) {
+		throw new Error(`The blog collection must include body: ${entry.source}`)
 	}
-	const draft = fields.draft ?? false
-	if (typeof draft !== 'boolean') {
-		fail('"draft" must be true or false')
-	}
-	const date = optionalDate('date') ?? fail('"date" is required')
-
+	// validatePost has already rejected entries without these fields or with the wrong types.
+	const fields = entry.frontmatter as Partial<Record<keyof PostFrontmatter, string>>
 	return {
-		slug,
-		title: requiredString('title'),
-		description: requiredString('description'),
-		date,
-		updated: optionalDate('updated'),
-		lang: lang as string,
-		draft: draft as boolean,
-		body: source.slice(match[0].length),
+		slug: POST_SOURCE.exec(entry.source)?.[1] ?? '',
+		title: (fields.title ?? '').trim(),
+		description: (fields.description ?? '').trim(),
+		date: fields.date ?? '',
+		updated: fields.updated,
+		lang: fields.lang ?? 'en',
+		body: entry.body,
 	}
 }
 
 /**
- * Estimates reading time in whole minutes.
- *
- * English is counted at 200 words a minute. Japanese has no spaces between words, so it is counted
- * at 500 characters a minute instead.
+ * Estimates reading time in whole minutes with Ox Content's estimator, which counts Japanese by
+ * characters and other text by words.
  *
  * @param markdown - Post body.
- * @param lang - Language of the post.
- * @returns Minutes, at least 1.
+ * @returns Minutes, at least 1 so an empty draft does not read "0 min".
  * @example
- * readingTime('word '.repeat(450), 'en') // 3
+ * readingTime('word '.repeat(450)) // 3
  */
-export function readingTime(markdown: string, lang: string): number {
-	const units = lang.startsWith('ja')
-		? markdown.replace(/\s/g, '').length / 500
-		: markdown.split(/\s+/).filter(Boolean).length / 200
-	return Math.max(1, Math.ceil(units))
+export function readingTime(markdown: string): number {
+	return Math.max(1, readingTimeMinutes(markdown))
 }
 
 /**
- * Orders posts newest first and drops drafts unless they are wanted.
+ * Orders posts newest first.
  *
- * @param posts - Parsed posts in any order.
- * @param includeDrafts - Whether drafts stay in, as in the dev server.
+ * @param posts - Posts in any order.
  * @returns A new array, newest first; posts with the same date are ordered by slug.
  */
-export function listPosts<T extends Pick<PostSource, 'date' | 'draft' | 'slug'>>(
-	posts: readonly T[],
-	includeDrafts: boolean
-): T[] {
-	return posts
-		.filter((post) => includeDrafts || !post.draft)
-		.toSorted((a, b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug))
+export function sortPosts<T extends Pick<PostSource, 'date' | 'slug'>>(posts: readonly T[]): T[] {
+	return posts.toSorted((a, b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug))
 }
 
 if (import.meta.vitest) {
 	const { describe, expect, test } = import.meta.vitest
 
-	const file = 'src/content/blog/hello-world/index.md'
-	const post = (frontmatter: string, body = 'Body text.') => `---\n${frontmatter}\n---\n${body}`
+	const valid = { title: 'Hello', description: 'A first post.', date: '2026-09-17' }
+	const document = (frontmatter: Record<string, unknown>, source = 'blog/hello-world/index.md') => ({
+		source,
+		frontmatter,
+	})
 
-	describe('parsePost', () => {
-		test('reads required and optional fields and applies defaults', () => {
-			expect(parsePost(file, post('title: Hello\ndescription: A first post.\ndate: 2026-09-17'))).toEqual({
-				slug: 'hello-world',
-				title: 'Hello',
-				description: 'A first post.',
-				date: '2026-09-17',
-				updated: undefined,
-				lang: 'en',
-				draft: false,
-				body: 'Body text.',
-			})
-		})
-
-		test('keeps lang, updated and draft when given', () => {
-			const parsed = parsePost(
-				file,
-				post('title: こんにちは\ndescription: 説明\ndate: 2026-09-17\nupdated: 2026-09-18\nlang: ja\ndraft: true')
-			)
-			expect(parsed).toMatchObject({ lang: 'ja', updated: '2026-09-18', draft: true })
+	describe('validatePost', () => {
+		test('accepts required fields alone and with every optional field', () => {
+			expect(validatePost(document(valid))).toBeUndefined()
+			expect(
+				validatePost(document({ ...valid, updated: '2026-09-18', lang: 'ja', draft: true, unlisted: true }))
+			).toBeUndefined()
 		})
 
 		test.each([
-			['missing frontmatter', 'No frontmatter here.', 'missing the --- frontmatter block'],
-			['missing title', post('description: d\ndate: 2026-09-17'), '"title" must be a non-empty string'],
-			['empty description', post('title: t\ndescription: ""\ndate: 2026-09-17'), '"description" must be a non-empty'],
-			['missing date', post('title: t\ndescription: d'), '"date" is required'],
-			['malformed date', post('title: t\ndescription: d\ndate: 2026-9-1'), '"date" must be a date'],
-			['non-boolean draft', post('title: t\ndescription: d\ndate: 2026-09-17\ndraft: yes please'), '"draft" must be'],
-		])('rejects %s', (_, source, message) => {
-			expect(() => parsePost(file, source)).toThrow(`Invalid post ${file}: ${message}`)
+			['missing title', { description: 'd', date: '2026-09-17' }, '"title" must be a non-empty string'],
+			['empty description', { ...valid, description: ' ' }, '"description" must be a non-empty string'],
+			['missing date', { title: 't', description: 'd' }, '"date" is required'],
+			['malformed date', { ...valid, date: '2026-9-1' }, '"date" must be a date written as YYYY-MM-DD'],
+			['malformed updated', { ...valid, updated: 'tomorrow' }, '"updated" must be a date written as YYYY-MM-DD'],
+			['empty lang', { ...valid, lang: '' }, '"lang" must be a non-empty string'],
+			['non-boolean draft', { ...valid, draft: 'yes please' }, '"draft" must be true or false'],
+		])('rejects %s', (_, frontmatter, message) => {
+			expect(validatePost(document(frontmatter))).toContainEqual(expect.stringContaining(message))
+		})
+
+		test('reports every problem of a post at once', () => {
+			expect(validatePost(document({}))).toHaveLength(3)
 		})
 
 		test('rejects a slug that would need escaping in a URL', () => {
-			expect(() => parsePost('src/content/blog/Hello World/index.md', post('title: t'))).toThrow(
-				'must be lower-case words joined by hyphens'
+			expect(validatePost(document(valid, 'blog/Hello World/index.md'))).toContainEqual(
+				expect.stringContaining('must be lower-case words joined by hyphens')
 			)
 		})
 
-		test('rejects a post that is not an index.md inside its own directory', () => {
-			expect(() => parsePost('src/content/blog/hello-world.md', post('title: t'))).toThrow(
-				'posts must be written as <slug>/index.md'
-			)
+		test.each(['blog/hello-world.md', 'blog/hello-world/notes.md', 'blog/a/b/index.md'])(
+			'rejects %s, which is not blog/<slug>/index.md',
+			(source) => {
+				expect(validatePost(document(valid, source))).toBe('posts must be written as blog/<slug>/index.md')
+			}
+		)
+	})
+
+	test('postFromEntry reads the slug from the directory and defaults lang to en', () => {
+		const entry = {
+			id: 'blog/blog/hello-world/index.md',
+			collection: 'blog',
+			path: '/blog/hello-world',
+			stem: 'blog/hello-world/index',
+			source: 'blog/hello-world/index.md',
+			extension: '.md',
+			title: 'Hello',
+			frontmatter: valid,
+			body: 'Body text.',
+		} satisfies CollectionEntry
+		expect(postFromEntry(entry)).toEqual({
+			slug: 'hello-world',
+			...valid,
+			updated: undefined,
+			lang: 'en',
+			body: 'Body text.',
 		})
 	})
 
-	describe('readingTime', () => {
-		test('counts English at 200 words a minute, rounding up', () => {
-			expect(readingTime('word '.repeat(201), 'en')).toBe(2)
-		})
-
-		test('counts Japanese at 500 characters a minute', () => {
-			expect(readingTime('あ'.repeat(1001), 'ja')).toBe(3)
-		})
-
-		test('never reports less than a minute', () => {
-			expect(readingTime('', 'en')).toBe(1)
-		})
+	test('readingTime never reports less than a minute', () => {
+		expect(readingTime('')).toBe(1)
 	})
 
-	describe('listPosts', () => {
+	test('sortPosts orders newest first, then by slug', () => {
 		const posts = [
-			{ slug: 'b', date: '2026-01-01', draft: false },
-			{ slug: 'draft', date: '2026-12-01', draft: true },
-			{ slug: 'a', date: '2026-01-01', draft: false },
-			{ slug: 'newest', date: '2026-06-01', draft: false },
+			{ slug: 'b', date: '2026-01-01' },
+			{ slug: 'a', date: '2026-01-01' },
+			{ slug: 'newest', date: '2026-06-01' },
 		]
-
-		test('orders newest first, then by slug, and drops drafts', () => {
-			expect(listPosts(posts, false).map((post) => post.slug)).toEqual(['newest', 'a', 'b'])
-		})
-
-		test('keeps drafts when asked', () => {
-			expect(listPosts(posts, true).map((post) => post.slug)).toEqual(['draft', 'newest', 'a', 'b'])
-		})
+		expect(sortPosts(posts).map((post) => post.slug)).toEqual(['newest', 'a', 'b'])
 	})
 }

@@ -4,7 +4,6 @@ import type {
 	OxContentCustomHostModule,
 	OxContentCustomHostRenderContext,
 	OxContentCustomHostRoute,
-	OxContentCustomHostRoutesContext,
 } from '@ox-content/vite-plugin'
 
 import { rewriteCollectionAssetUrls } from '@ox-content/vite-plugin'
@@ -23,16 +22,6 @@ export const STYLESHEET = 'src/styles/global.css'
 
 /** Embed card styles, a separate client input so only posts with embeds download them. */
 export const EMBED_STYLESHEET = 'src/styles/embeds.css'
-
-/**
- * Decides whether drafts are part of this run: previewed in the dev server, never built.
- *
- * @param context - Any custom-host context.
- * @returns True only while serving.
- */
-function includeDrafts(context: Pick<OxContentCustomHostRoutesContext, 'mode'>): boolean {
-	return context.mode === 'serve'
-}
 
 /**
  * Picks the Content-Type for a non-HTML route from its path.
@@ -144,15 +133,15 @@ async function renderPage(page: PageRoute, renderContext: OxContentCustomHostRen
  */
 const host = {
 	async routes(context) {
-		const table = await context.memo('routes', () =>
-			createRouteTable(modules, { includeDrafts: includeDrafts(context) })
+		const table = await context.memo('routes', async () =>
+			createRouteTable(modules, { posts: await context.memo('posts', () => loadPosts(context)) })
 		)
 		return [...table.values()].map((page): OxContentCustomHostRoute => ({
 			path: page.path,
 			inputPath: page.inputPath,
 			// Only directory paths are real pages; /404.html is served for every unknown URL and must
-			// stay out of the sitemap and llms.txt.
-			unlisted: !page.path.endsWith('/'),
+			// stay out of the sitemap and llms.txt. Pages can also opt out, as unlisted posts do.
+			unlisted: page.unlisted === true || !page.path.endsWith('/'),
 			render: (renderContext) => renderPage(page, renderContext),
 		}))
 	},
@@ -166,7 +155,7 @@ const host = {
 		if (!(context.request.headers.get('accept') ?? '').includes('text/html')) {
 			return undefined
 		}
-		const table = await createRouteTable(modules, { includeDrafts: includeDrafts(context) })
+		const table = await createRouteTable(modules, { posts: await loadPosts(context) })
 		const page = table.get(NOT_FOUND_PATH)
 		if (page === undefined) {
 			return undefined
@@ -175,8 +164,8 @@ const host = {
 		return { ...result, status: 404 }
 	},
 
-	outputs(context) {
-		const posts = loadPosts(includeDrafts(context))
+	async outputs(context) {
+		const posts = (await context.memo('posts', () => loadPosts(context))).filter((post) => post.listed)
 		return {
 			siteDescription: `${SITE.name} ${SITE.tagline}.`,
 			collections: {
