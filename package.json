@@ -16,8 +16,8 @@
 		"typos": "typos --force-exclude"
 	},
 	"dependencies": {
-		"react": "^19.3.0",
-		"react-dom": "^19.3.0"
+		"react": "^19.3.1",
+		"react-dom": "^19.3.1"
 	},
 	"devDependencies": {
 		"@fontsource-variable/geist": "^5.3.0",
@@ -30,8 +30,8 @@
 		"@shadcn/lint": "^0.1.0",
 		"@tailwindcss/vite": "^4.3.3",
 		"@types/node": "^24.13.4",
-		"@types/react": "^19.3.0",
-		"@types/react-dom": "^19.3.0",
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
 		"budoux": "^0.9.1",
 		"geist": "^1.7.2",
 		"tailwindcss": "^4.3.3",
