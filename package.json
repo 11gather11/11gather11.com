@@ -35,7 +35,7 @@
 		"budoux": "^0.9.1",
 		"geist": "^1.7.2",
 		"tailwindcss": "^4.3.3",
-		"vite-plus": "0.3.2"
+		"vite-plus": "0.3.3"
 	},
 	"packageManager": "pnpm@12.3.4"
 }
